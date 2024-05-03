@@ -9,6 +9,7 @@ This project is a CRM system designed to manage users, partners, transactions, a
 - Java 17
 - Maven
 - PostgreSQL
+- Docker (optional for running the database in a container)
 
 ### Installing
 
@@ -37,6 +38,10 @@ mvn spring-boot:run
 
 The application will start running at `http://localhost:8080`.
 
+### Running the database in a container
+```bash
+docker-compose up -d
+```
 
 ## Configuration
 
