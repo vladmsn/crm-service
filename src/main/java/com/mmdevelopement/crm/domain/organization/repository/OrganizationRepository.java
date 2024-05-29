@@ -2,8 +2,9 @@
  * @author Vlad Muresan <mv.muresanvlad@gmail.com>
  */
 
-package com.mmdevelopement.crm.domain.organization;
+package com.mmdevelopement.crm.domain.organization.repository;
 
+import com.mmdevelopement.crm.domain.organization.entity.OrganizationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

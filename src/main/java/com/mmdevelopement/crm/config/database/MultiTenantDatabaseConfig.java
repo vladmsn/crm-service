@@ -23,6 +23,11 @@ import java.util.Map;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
+        basePackages = {
+                "com.mmdevelopement.crm.domain.user",
+                "com.mmdevelopement.crm.domain.financial",
+                "com.mmdevelopement.crm.domain.partner"
+        },
         entityManagerFactoryRef = "multiTenantEntityManagerFactory",
         transactionManagerRef = "multiTenantTransactionManager"
 )
@@ -36,7 +41,7 @@ public class MultiTenantDatabaseConfig {
             "com.mmdevelopement.crm.domain.partner",
     };
 
-    @Bean(name = "tenantEntityManagerFactory")
+    @Bean(name = "multiTenantEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean tenantEntityManagerFactory() {
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
@@ -50,8 +55,8 @@ public class MultiTenantDatabaseConfig {
         return factory;
     }
 
-    @Bean(name = "tenantTransactionManager")
-    public PlatformTransactionManager tenantTransactionManager(@Qualifier("tenantEntityManagerFactory") EntityManagerFactory tenantEntityManagerFactory) {
+    @Bean(name = "multiTenantTransactionManager")
+    public PlatformTransactionManager tenantTransactionManager(@Qualifier("multiTenantEntityManagerFactory") EntityManagerFactory tenantEntityManagerFactory) {
         return new JpaTransactionManager(tenantEntityManagerFactory);
     }
 }

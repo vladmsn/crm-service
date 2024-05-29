@@ -5,12 +5,15 @@
 package com.mmdevelopement.crm.config.database;
 
 
+import com.mmdevelopement.crm.config.database.properties.DatabaseConnectionProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
@@ -28,9 +31,11 @@ import jakarta.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.util.Properties;
 
+@RequiredArgsConstructor
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
+        basePackages = "com.mmdevelopement.crm.domain.organization.*",
         entityManagerFactoryRef = "globalEntityManagerFactory",
         transactionManagerRef = "globalTransactionManager"
 )
@@ -40,15 +45,23 @@ public class GlobalDatabaseConfiguration {
             "com.mmdevelopement.crm.domain.organization"
     };
 
+    private final DatabaseConnectionProperties databaseConnectionProperties;
+
     @Bean(name = "globalDataSource")
     @Primary
-    @ConfigurationProperties(prefix = "spring.datasource.global")
     public DataSource globalDataSource() {
-        return DataSourceBuilder.create().build();
+        return DataSourceBuilder.create()
+                .url(databaseConnectionProperties.getUrl())
+                .username(databaseConnectionProperties.getUsername())
+                .password(databaseConnectionProperties.getPassword())
+                .driverClassName(databaseConnectionProperties.getDriverClassName())
+                .build();
     }
 
     @Bean
+    @DependsOn("globalDataSource")
     public Flyway flyway(@Qualifier("globalDataSource") DataSource dataSource) {
+
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations("classpath:/db/migration/global-crm")

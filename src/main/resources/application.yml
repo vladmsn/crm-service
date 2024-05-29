@@ -2,11 +2,12 @@ spring:
   application:
     name: crm-service
   datasource:
-    global:
+    crm:
       url: jdbc:postgresql://localhost:5432/global_db
       username: crm-super-admin
       password: 123456
       driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
         ddl-auto: update
@@ -18,4 +19,38 @@ spring:
         jdbc:
             lob:
             non_contextual_creation: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8890/realms/crm
+          jwk-set-uri: http://localhost:8890/realms/crm/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak:
+            client-id: crm-client
+            client-secret: Weu1BgfKQZpj0h4KjIicOUMevtXiO4rF
+            authorization-grant-type: authorization_code
+            scope:
+              - openid
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8890/realms/crm
+            user-name-attribute: preferred_username
+keycloak:
+  client:
+    server-url: http://localhost:8890
+    realm: crm
+    client-id:  admin-cli
+    secret: 7PCCE2ACMt3bzSopAUi4cd9L9BmU6ALW
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: swagger-ui.html
+
+
 

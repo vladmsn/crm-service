@@ -2,14 +2,17 @@
  * @author Vlad Muresan <mv.muresanvlad@gmail.com>
  */
 
-package com.mmdevelopement.crm.domain.organization;
+package com.mmdevelopement.crm.domain.organization.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.UUID;
 
 @Data
+@Accessors(chain = true, fluent = true)
 @Entity
 @Table(name = "organization")
 public class OrganizationEntity {
@@ -30,8 +33,6 @@ public class OrganizationEntity {
     @Column(name = "license", nullable = false, unique = true, updatable = false)
     private String license = UUID.randomUUID().toString();
 
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "image")
-    private byte[] image;
+    @Column(name = "status", nullable = false)
+    private String status;
 }

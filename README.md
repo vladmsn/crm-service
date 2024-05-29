@@ -9,7 +9,7 @@ This project is a CRM system designed to manage users, partners, transactions, a
 - Java 17
 - Maven
 - PostgreSQL
-- Docker (optional for running the database in a container)
+- Docker (optional for running the database and Keycloak in containers)
 
 ### Installing
 
@@ -38,7 +38,24 @@ mvn spring-boot:run
 
 The application will start running at `http://localhost:8080`.
 
-### Running the database in a container
+## Docker Setup
+
+This project uses Docker Compose to run PostgreSQL and Keycloak, ensuring a quick and consistent setup for development and production environments.
+
+### Requirements
+
+- Docker Engine
+- Docker Compose
+
+### Services
+
+- **PostgreSQL**: Database service for the application and Keycloak.
+- **Keycloak**: Open-source Identity and Access Management.
+
+### Running the Services
+
+To start all services, navigate to the project's root directory and run:
+
 ```bash
 docker-compose up -d
 ```

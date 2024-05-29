@@ -1,0 +1,61 @@
+package com.mmdevelopement.crm.domain.financial.entity.invoices;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+import java.util.Date;
+import java.util.List;
+
+@Data
+@Accessors(chain = true, fluent = true)
+@Entity
+@Table(name = "invoice")
+public class InvoiceEntity {
+
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "total_amount")
+    private Float total;
+
+    @Column(name = "partner_id")
+    private Integer partnerId;
+
+    @Column(name = "category_id")
+    private Integer categoryId;
+
+    @Column(name = "invoice_number")
+    private String invoiceNumber;
+
+    @Column(name = "order_number")
+    private String orderNumber;
+
+    @Column(name = "direction")
+    private String direction;
+
+    @Column(name = "invoice_date")
+    private Date invoiceDate;
+
+    @Column(name = "due_date")
+    private Date dueDate;
+
+    @Column(name = "completed")
+    private Boolean completed;
+
+    // join elements and also have them be persisted when the invoice is saved
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "invoice_id")
+    private List<InvoiceElementEntity> elements;
+
+}

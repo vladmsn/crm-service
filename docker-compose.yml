@@ -1,15 +1,43 @@
-version: '3.8'
 services:
-  postgres:
+  postgres_crm:
     image: postgres:latest
     environment:
       POSTGRES_DB: global_db
       POSTGRES_USER: crm-super-admin
       POSTGRES_PASSWORD: 123456
+      POSTGRES_MULTIPLE_DATABASES: global_db, keycloak
+    healthcheck:
+      test: "exit 0"
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - crm_network
+
+  keycloak:
+    image: bitnami/keycloak:latest
+    environment:
+      KEYCLOAK_DATABASE_HOST: postgres_crm
+      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_DATABASE_NAME: keycloak
+      KEYCLOAK_DATABASE_SCHEMA: public
+      KEYCLOAK_DATABASE_USER: crm-super-admin
+      KEYCLOAK_DATABASE_PASSWORD: 123456
+
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8890:8080"
+    depends_on:
+      postgres_crm:
+        condition: service_healthy
+    networks:
+      - crm_network
 
 volumes:
   pgdata:
+    driver: local
+
+networks:
+  crm_network:

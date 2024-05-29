@@ -4,10 +4,12 @@
 
 package com.mmdevelopement.crm.config.database;
 
-import com.mmdevelopement.crm.domain.organization.OrganizationEntity;
-import com.mmdevelopement.crm.domain.organization.OrganizationService;
+import com.mmdevelopement.crm.domain.organization.entity.OrganizationEntity;
+import com.mmdevelopement.crm.domain.organization.entity.dto.OrganizationDto;
+import com.mmdevelopement.crm.domain.organization.service.OrganizationService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class TenantConnectionProvider implements MultiTenantConnectionProvider<String> {
 
@@ -34,7 +37,7 @@ public class TenantConnectionProvider implements MultiTenantConnectionProvider<S
         final Connection connection = dataSource.getConnection();
 
         String schema = organizationService.findOrganizationByTenantId(tenantId)
-                .map(OrganizationEntity::getDbSchemaName)
+                .map(OrganizationDto::dbSchemaName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Organization with tenantId: " + tenantId + " not found"));
 
@@ -50,6 +53,7 @@ public class TenantConnectionProvider implements MultiTenantConnectionProvider<S
 
     @Override
     public Connection getAnyConnection() throws SQLException {
+        log.info(dataSource.toString());
         return dataSource.getConnection();
     }
 
