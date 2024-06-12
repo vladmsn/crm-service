@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class ElementDto {
 
         private Integer id;
@@ -31,23 +31,23 @@ public class ElementDto {
 
         public static ElementDto toDto(ElementEntity elementEntity) {
             return new ElementDto()
-                    .id(elementEntity.id())
-                    .name(elementEntity.name())
-                    .description(elementEntity.description())
-                    .acquisitionPrice(elementEntity.acquisitionPrice())
-                    .sellingPrice(elementEntity.sellingPrice())
-                    .categoryId(elementEntity.categoryId())
-                    .taxId(elementEntity.taxId());
+                    .setId(elementEntity.id())
+                    .setName(elementEntity.name())
+                    .setDescription(elementEntity.description())
+                    .setAcquisitionPrice(elementEntity.acquisitionPrice())
+                    .setSellingPrice(elementEntity.sellingPrice())
+                    .setCategoryId(elementEntity.categoryId())
+                    .setTaxId(elementEntity.taxId());
         }
 
-        public static ElementEntity toEntity(ElementDto elementDto) {
+        public ElementEntity toEntity() {
             return new ElementEntity()
-                    .id(elementDto.id())
-                    .name(elementDto.name())
-                    .description(elementDto.description())
-                    .acquisitionPrice(elementDto.acquisitionPrice())
-                    .sellingPrice(elementDto.sellingPrice())
-                    .categoryId(elementDto.categoryId())
-                    .taxId(elementDto.taxId());
+                    .id(getId())
+                    .name(getName())
+                    .description(getDescription())
+                    .acquisitionPrice(getAcquisitionPrice())
+                    .sellingPrice(getSellingPrice())
+                    .categoryId(getCategoryId())
+                    .taxId(getTaxId());
         }
 }

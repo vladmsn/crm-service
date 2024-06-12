@@ -5,13 +5,16 @@ import com.mmdevelopement.crm.domain.financial.entity.dto.InvoiceDto;
 import com.mmdevelopement.crm.domain.financial.entity.dto.InvoiceElementDto;
 import com.mmdevelopement.crm.domain.financial.entity.dto.InvoicePaymentDto;
 import com.mmdevelopement.crm.domain.financial.entity.dto.TaxDto;
+import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
 import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoiceElementEntity;
 import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoiceEntity;
+import com.mmdevelopement.crm.domain.financial.entity.invoices.QInvoiceEntity;
 import com.mmdevelopement.crm.domain.financial.repository.InvoicePaymentRepository;
 import com.mmdevelopement.crm.domain.financial.repository.InvoiceRepository;
 import com.mmdevelopement.crm.domain.partner.service.PartnerService;
 import com.mmdevelopement.crm.infrastructure.exceptions.BadRequestException;
 import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundException;
+import com.querydsl.core.types.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 
 @Slf4j
@@ -30,13 +34,42 @@ public class InvoiceService {
 
     private final InvoicePaymentRepository invoicePaymentRepository;
 
-    private final TaxService taxService;
-
     private final ElementService elementService;
 
     private final CategoryService categoryService;
 
     private final PartnerService partnerService;
+
+    private final BankAccountService bankAccountService;
+
+
+    // ==============================  Invoices ==============================
+
+    public List<InvoiceDto> getAllInvoices() {
+        log.debug("Getting all invoices");
+
+        return invoiceRepository.findAll()
+                .stream()
+                .map(invoice -> {
+                    var invoiceDto = InvoiceDto.toDto(invoice);
+                    decorateWithDetails(invoiceDto);
+                    return invoiceDto;
+                })
+                .toList();
+    }
+
+
+    public List<InvoiceDto> findInvoices(Predicate predicate) {
+        log.debug("Finding invoices");
+
+        return StreamSupport.stream(invoiceRepository.findAll(predicate).spliterator(), false)
+                .map(invoice -> {
+                    var invoiceDto = InvoiceDto.toDto(invoice);
+                    decorateWithDetails(invoiceDto);
+                    return invoiceDto;
+                })
+                .toList();
+    }
 
     public InvoiceDto getInvoiceById(Integer id) {
         log.debug("Getting invoice by id: {}", id);
@@ -45,28 +78,30 @@ public class InvoiceService {
                 .map(InvoiceDto::toDto)
                 .map(invoiceDto -> {
                     decorateWithDetails(invoiceDto);
+                    invoiceDto.setElements(getInvoiceElements(id));
                     return invoiceDto;
                 })
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
     }
 
-    public List<InvoiceDto> getAllInvoices() {
-        log.debug("Getting all invoices");
+    @Transactional
+    public InvoiceDto createInvoice(InvoiceDto invoiceDto) {
+        InvoiceEntity invoice = invoiceDto.toEntity();
+        invoice.remainingAmount(invoice.total());
 
-        return invoiceRepository.findAll()
-                .stream()
-                .map(InvoiceDto::toDto)
-                .toList();
+        if (invoice.elements().isEmpty()) {
+            throw new BadRequestException("Invoice must have at least one element");
+        }
+
+        InvoiceEntity savedInvoice = invoiceRepository.save(invoice);
+        addInvoiceElements(savedInvoice.id(), invoiceDto.getElements());
+
+        log.info("Created invoice: {}", savedInvoice);
+
+        return InvoiceDto.toDto(savedInvoice);
     }
 
-    private void decorateWithDetails(InvoiceDto invoiceDto) {
-
-        var partner = partnerService.getPartnerById(invoiceDto.partnerId());
-        var category = categoryService.getCategoryById(invoiceDto.categoryId());
-
-        invoiceDto.partnerName(partner.name());
-        invoiceDto.categoryName(category.name());
-    }
+    // ================================== Invoice Elements ==================================
 
     public List<InvoiceElementDto> getInvoiceElements(Integer id) {
 
@@ -82,23 +117,14 @@ public class InvoiceService {
         return invoiceElements.stream()
                 .map(invElement -> {
                     var element = elementService.getElementById(invElement.elementId());
-                    var tax = taxService.getTaxById(invElement.taxId());
 
-                    return InvoiceElementDto.fromElement(element, invElement.quantity(), invoice.direction(), tax.value());
+                    return InvoiceElementDto.fromElement(element, invElement.quantity(), invElement.price(), invElement.tax());
                 })
                 .toList();
     }
 
-    public InvoiceDto createInvoice(InvoiceDto invoiceDto) {
-        InvoiceEntity savedInvoice = invoiceRepository.save(InvoiceDto.toEntity(invoiceDto));
-
-        log.info("Created invoice: {}", savedInvoice);
-
-        return InvoiceDto.toDto(savedInvoice);
-    }
-
     @Transactional
-    public List<InvoiceElementDto> addInvoiceElements(Integer id, Map<InvoiceElementDto, TaxDto> invoiceElementMap) {
+    public void addInvoiceElements(Integer id, List<InvoiceElementDto> invoiceElementsList) {
 
         if (id == null) {
             throw new BadRequestException("Invoice id is required");
@@ -107,16 +133,17 @@ public class InvoiceService {
         InvoiceEntity invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
 
-        List<InvoiceElementEntity> invoiceElements = invoiceElementMap.entrySet()
+        List<InvoiceElementEntity> invoiceElements = invoiceElementsList
                 .stream()
-                .map(entry -> {
-                    var element = elementService.getElementById(entry.getKey().elementId());
-                    var tax = taxService.getTaxById(entry.getValue().id());
+                .map(invElement -> {
+                    // look up element
+                    elementService.getElementById(invElement.getElementId());
 
                     return new InvoiceElementEntity()
-                            .elementId(element.id())
-                            .quantity(entry.getKey().quantity())
-                            .taxId(tax.id());
+                            .elementId(invElement.getElementId())
+                            .quantity(invElement.getQuantity())
+                            .tax(invElement.getElementTax())
+                            .price(invElement.getElementPrice());
                 })
                 .toList();
 
@@ -124,13 +151,21 @@ public class InvoiceService {
 
         invoiceRepository.save(invoice);
         log.info("Added elements to invoice: {}", invoice);
+    }
 
-        return invoiceElements.stream()
-                .map(invElement -> {
-                    var element = elementService.getElementById(invElement.elementId());
-                    var tax = taxService.getTaxById(invElement.taxId());
+    // ================== Invoice Payments ==================
 
-                    return InvoiceElementDto.fromElement(element, invElement.quantity(), invoice.direction(), tax.value());
+    public List<InvoicePaymentDto> getAllInvoicePayments() {
+        log.debug("Getting all invoice payments");
+
+        return invoicePaymentRepository.findAll()
+                .stream()
+                .map(invoicePayment -> {
+                    var partner = partnerService.getPartnerById(invoicePayment.partnerId());
+                    var invoice = invoiceRepository.findById(invoicePayment.invoiceId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), invoice.direction());
                 })
                 .toList();
     }
@@ -138,39 +173,56 @@ public class InvoiceService {
     public List<InvoicePaymentDto> getInvoicePayments(Integer id) {
 
         if (id == null) {
-            throw new BadRequestException("Invoice id is required");
+            throw new BadRequestException("Invoice identifier is required");
         }
 
-        log.debug("Getting payments for invoice with id: {}", id);
+        log.debug("Getting payments for invoice with identifier: {}", id);
 
         InvoiceEntity invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
 
-        return invoicePaymentRepository.findAllByInvoiceId(id).stream()
+        return invoicePaymentRepository.findAllByInvoiceId(id)
+
+                .stream()
                 .map(invoicePayment -> {
                     var partner = partnerService.getPartnerById(invoicePayment.partnerId());
-                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.name(), partner.CUI(), invoice.direction());
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), invoice.direction());
                 })
                 .toList();
     }
 
-    public InvoicePaymentDto addInvoicePayment(Integer id, InvoicePaymentDto invoicePaymentDto) {
+    @Transactional
+    public InvoicePaymentDto addInvoicePayment(InvoicePaymentDto invoicePaymentDto) {
 
-        if (id == null) {
-            throw new BadRequestException("Invoice id is required");
+        if (invoicePaymentDto.getInvoiceId() == null && invoicePaymentDto.getReference() == null
+                                                        || invoicePaymentDto.getBankAccountId() == null) {
+            throw new BadRequestException("Invoice id or reference is required");
         }
 
-        InvoiceEntity invoice = invoiceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
-
-        invoicePaymentDto.invoiceId(id);
-        invoicePaymentDto.partnerId(invoice.partnerId());
+        // look-up checks
+        if (invoicePaymentDto.getInvoiceId() != null) {
+            getInvoiceById(invoicePaymentDto.getInvoiceId());
+        }
+        partnerService.getPartnerById(invoicePaymentDto.getPartnerId());
 
         var savedPayment = invoicePaymentRepository.save(invoicePaymentDto.toEntity());
-
         log.info("Added payment to invoice: {}", savedPayment);
 
+        bankAccountService.executeTransaction(invoicePaymentDto.getBankAccountId(), savedPayment.amount(), invoicePaymentDto.getDirection());
+
         var partner = partnerService.getPartnerById(savedPayment.partnerId());
-        return InvoicePaymentDto.fromEntity(savedPayment, partner.name(), partner.CUI(), invoice.direction());
+        return InvoicePaymentDto.fromEntity(savedPayment, partner.getName(), partner.getCUI(), invoicePaymentDto.getDirection());
     }
+
+    // ================== Private methods ==================
+
+    private void decorateWithDetails(InvoiceDto invoiceDto) {
+
+        var partner = partnerService.getPartnerById(invoiceDto.getPartnerId());
+        var category = categoryService.getCategoryById(invoiceDto.getCategoryId());
+
+        invoiceDto.setPartnerName(partner.getName());
+        invoiceDto.setCategoryName(category.getName());
+    }
+
 }

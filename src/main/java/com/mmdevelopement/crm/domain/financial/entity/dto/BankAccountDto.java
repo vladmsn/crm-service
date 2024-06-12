@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class BankAccountDto {
 
         private Integer id;
@@ -21,19 +21,19 @@ public class BankAccountDto {
 
         public static BankAccountDto fromEntity(BankAccountEntity entity) {
             return new BankAccountDto()
-                    .id(entity.id())
-                    .name(entity.name())
-                    .accountNumber(entity.accountNumber())
-                    .description(entity.description())
-                    .sold(entity.sold());
+                    .setId(entity.id())
+                    .setName(entity.name())
+                    .setAccountNumber(entity.accountNumber())
+                    .setDescription(entity.description())
+                    .setSold(entity.sold());
         }
 
         public BankAccountEntity toEntity() {
             return new BankAccountEntity()
-                    .id(id())
-                    .name(name())
-                    .accountNumber(accountNumber())
-                    .description(description())
-                    .sold(sold());
+                    .id(getId())
+                    .name(getName())
+                    .accountNumber(getAccountNumber())
+                    .description(getDescription())
+                    .sold(getSold());
         }
 }

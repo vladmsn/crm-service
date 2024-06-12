@@ -39,7 +39,7 @@ public class ElementController {
 
     @PutMapping("/")
     public ElementDto updateElement(@RequestBody ElementDto elementDto) {
-        if (elementDto.id() == null) {
+        if (elementDto.getId() == null) {
             throw new BadRequestException("Element id is required for update");
         }
 

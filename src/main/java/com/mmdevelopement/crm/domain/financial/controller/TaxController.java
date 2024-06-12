@@ -39,7 +39,7 @@ public class TaxController {
 
     @PutMapping("/")
     public TaxDto updateTax(@RequestBody TaxDto taxDto) {
-        if (taxDto.id() == null) {
+        if (taxDto.getId() == null) {
             throw new BadRequestException("Tax id is required for update");
         }
 

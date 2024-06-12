@@ -1,8 +1,10 @@
 package com.mmdevelopement.crm.domain.financial.entity.invoices;
 
+import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -11,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Fetch;
 
 import java.util.Date;
 import java.util.List;
@@ -29,6 +32,9 @@ public class InvoiceEntity {
     @Column(name = "total_amount")
     private Float total;
 
+    @Column(name = "remaining_amount")
+    private Float remainingAmount;
+
     @Column(name = "partner_id")
     private Integer partnerId;
 
@@ -42,7 +48,7 @@ public class InvoiceEntity {
     private String orderNumber;
 
     @Column(name = "direction")
-    private String direction;
+    private InvoiceDirection direction;
 
     @Column(name = "invoice_date")
     private Date invoiceDate;
@@ -54,8 +60,9 @@ public class InvoiceEntity {
     private Boolean completed;
 
     // join elements and also have them be persisted when the invoice is saved
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "invoice_id")
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Fetch(org.hibernate.annotations.FetchMode.JOIN)
+    @JoinColumn(name = "invoice_id", referencedColumnName = "id")
     private List<InvoiceElementEntity> elements;
 
 }

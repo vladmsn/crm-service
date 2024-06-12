@@ -26,7 +26,7 @@ public class PartnerService {
     public List<PartnerDto> findPartners() {
         return partnerRepository.findAll().stream()
                 .map(PartnerDto::fromEntity)
-                .map(partnerDto -> partnerDto.image(partnerDto.image() != null ? "present, but omitted" : null))
+                .map(partnerDto -> partnerDto.setImage(partnerDto.getImage() != null ? "present, but omitted" : null))
                 .toList();
     }
 

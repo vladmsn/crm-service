@@ -7,10 +7,13 @@ package com.mmdevelopement.crm.domain.organization.service;
 import com.mmdevelopement.crm.config.security.context.RequestContextHolder;
 import com.mmdevelopement.crm.domain.organization.entity.OrganizationEntity;
 import com.mmdevelopement.crm.domain.organization.entity.OrganizationInfoEntity;
+import com.mmdevelopement.crm.domain.organization.entity.OrganizationInvoicePreferencesEntity;
 import com.mmdevelopement.crm.domain.organization.entity.dto.OrganizationInfoDto;
+import com.mmdevelopement.crm.domain.organization.entity.dto.OrganizationInvoiceInfoDto;
 import com.mmdevelopement.crm.domain.organization.entity.wrapper.OrganizationWrapper;
 import com.mmdevelopement.crm.domain.organization.entity.dto.OrganizationDto;
 import com.mmdevelopement.crm.domain.organization.repository.OrganizationInfoRepository;
+import com.mmdevelopement.crm.domain.organization.repository.OrganizationInvoicePreferencesRepository;
 import com.mmdevelopement.crm.domain.organization.repository.OrganizationRepository;
 import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundException;
 import com.mmdevelopement.crm.utils.ImageUtils;
@@ -27,6 +30,7 @@ public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final OrganizationInfoRepository organizationInfoRepository;
+    private final OrganizationInvoicePreferencesRepository organizationInvoicePreferencesRepository;
 
     public List<OrganizationDto> getAllOrganizations() {
         return organizationRepository.findAll()
@@ -34,6 +38,7 @@ public class OrganizationService {
                 .map(organizationEntity -> OrganizationDto.builder()
                         .name(organizationEntity.name())
                         .tenantId(organizationEntity.tenantId())
+                        .colorCode(organizationEntity.colorCode())
                         .license(organizationEntity.license())
                         .dbSchemaName(organizationEntity.dbSchemaName())
                         .build())
@@ -69,7 +74,24 @@ public class OrganizationService {
                 .tenantId(organizationEntity.tenantId())
                 .license(organizationEntity.license())
                 .dbSchemaName(organizationEntity.dbSchemaName())
+                .colorCode(organizationEntity.colorCode())
                 .status(organizationEntity.status())
+                .build());
+    }
+
+    public Optional<OrganizationInvoiceInfoDto> findOrganizationInvoiceInfoByTenantId(String tenantId) {
+        OrganizationEntity organizationEntity = organizationRepository.findByTenantId(tenantId);
+        OrganizationInvoicePreferencesEntity organizationInvoicePreferencesEntity = organizationInvoicePreferencesRepository.findByOrganizationId(organizationEntity.id());
+
+        if (organizationInvoicePreferencesEntity == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(OrganizationInvoiceInfoDto.builder()
+                .id(organizationInvoicePreferencesEntity.id())
+                .organizationId(organizationInvoicePreferencesEntity.organizationId())
+                .prefix(organizationInvoicePreferencesEntity.prefix())
+                .startingNumber(organizationInvoicePreferencesEntity.startingNumber())
                 .build());
     }
 
@@ -89,7 +111,7 @@ public class OrganizationService {
         return OrganizationInfoDto.builder()
                 .telephone(organizationInfoEntity.telephone())
                 .email(organizationInfoEntity.email())
-                .image(ImageUtils.encodeImage(organizationInfoEntity.image()))
+                .image(organizationInfoEntity.image() != null ? ImageUtils.encodeImage(organizationInfoEntity.image()): null)
                 .CUI(organizationInfoEntity.CUI())
                 .address(organizationInfoEntity.address())
                 .city(organizationInfoEntity.city())
@@ -97,7 +119,13 @@ public class OrganizationService {
                 .country(organizationInfoEntity.country())
                 .postalCode(organizationInfoEntity.postalCode())
                 .build();
+    }
 
+    public OrganizationInvoiceInfoDto getCurrentOrganizationInvoiceInfo() {
+        String tenantId = RequestContextHolder.getCurrentTenantId();
+
+        return findOrganizationInvoiceInfoByTenantId(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization invoice info not found"));
     }
 
     @Transactional

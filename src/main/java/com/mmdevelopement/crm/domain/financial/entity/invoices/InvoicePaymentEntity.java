@@ -25,6 +25,9 @@ public class InvoicePaymentEntity {
     @Column(name = "invoice_id")
     private Integer invoiceId;
 
+    @Column(name = "reference")
+    private String reference;
+
     @Column(name = "partner_id")
     private Integer partnerId;
 

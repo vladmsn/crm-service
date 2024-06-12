@@ -8,7 +8,7 @@ import lombok.experimental.Accessors;
 import java.util.Date;
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class TransferDto {
 
     private Integer id;
@@ -31,26 +31,26 @@ public class TransferDto {
 
     public static TransferDto fromEntity(TransferEntity entity) {
         return new TransferDto()
-                .id(entity.id())
-                .amount(entity.amount())
-                .fromBankAccountId(entity.fromBankAccountId())
-                .toBankAccountId(entity.toBankAccountId())
-                .date(entity.transferDate())
-                .description(entity.description())
-                .paymentMethod(entity.paymentMethod())
-                .reference(entity.reference());
+                .setId(entity.id())
+                .setAmount(entity.amount())
+                .setFromBankAccountId(entity.fromBankAccountId())
+                .setToBankAccountId(entity.toBankAccountId())
+                .setDate(entity.transferDate())
+                .setDescription(entity.description())
+                .setPaymentMethod(entity.paymentMethod())
+                .setReference(entity.reference());
     }
 
     public TransferEntity toEntity() {
         return new TransferEntity()
-                .id(id())
-                .amount(amount())
-                .fromBankAccountId(fromBankAccountId())
-                .toBankAccountId(toBankAccountId())
-                .transferDate(date())
-                .description(description())
-                .paymentMethod(paymentMethod())
-                .reference(reference());
+                .id(getId())
+                .amount(getAmount())
+                .fromBankAccountId(getFromBankAccountId())
+                .toBankAccountId(getToBankAccountId())
+                .transferDate(getDate())
+                .description(getDescription())
+                .paymentMethod(getPaymentMethod())
+                .reference(getReference());
     }
 
 }

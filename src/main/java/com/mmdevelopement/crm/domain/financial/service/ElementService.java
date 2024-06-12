@@ -6,6 +6,7 @@ import com.mmdevelopement.crm.domain.financial.entity.dto.ElementDto;
 import com.mmdevelopement.crm.domain.financial.repository.CategoryRepository;
 import com.mmdevelopement.crm.domain.financial.repository.ElementRepository;
 import com.mmdevelopement.crm.domain.financial.repository.TaxRepository;
+import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,11 +44,11 @@ public class ElementService {
                     decorateWithDetails(elementDto);
                     return elementDto;
                 })
-                .orElseThrow(() -> new RuntimeException("Element not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Element not found"));
     }
 
     public ElementDto saveElement(ElementDto elementDto) {
-        ElementEntity elementEntity =  elementRepository.save(ElementDto.toEntity(elementDto));
+        ElementEntity elementEntity =  elementRepository.save(elementDto.toEntity());
 
         log.info("Element saved: {}", elementEntity);
 
@@ -61,18 +62,18 @@ public class ElementService {
         log.debug("Deleting element by id: {}", id);
 
         ElementEntity elementEntity = elementRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Element not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Element not found"));
 
         elementEntity.deleted(true);
         elementRepository.save(elementEntity);
     }
 
     private void decorateWithDetails(ElementDto elementDto) {
-        elementDto.categoryName(
-                categoryRepository.findById(elementDto.categoryId())
+        elementDto.setCategoryName(
+                categoryRepository.findById(elementDto.getCategoryId())
                         .map(categoryEntity -> categoryEntity.name())
                         .orElse(null));
-        elementDto.taxValue(taxRepository.findById(elementDto.taxId())
+        elementDto.setTaxValue(taxRepository.findById(elementDto.getTaxId())
                 .map(taxEntity -> taxEntity.rate()).orElse(null));
     }
 }

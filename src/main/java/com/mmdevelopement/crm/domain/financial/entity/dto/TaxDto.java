@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class TaxDto {
 
         private Integer id;
@@ -21,19 +21,19 @@ public class TaxDto {
 
         public static TaxDto toDto(TaxEntity taxEntity) {
             return new TaxDto()
-                    .id(taxEntity.id())
-                    .name(taxEntity.name())
-                    .type(taxEntity.type())
-                    .value(taxEntity.rate())
-                    .deleted(taxEntity.deleted());
+                    .setId(taxEntity.id())
+                    .setName(taxEntity.name())
+                    .setType(taxEntity.type())
+                    .setValue(taxEntity.rate())
+                    .setDeleted(taxEntity.deleted());
         }
 
         public static TaxEntity toEntity(TaxDto taxDto) {
             return new TaxEntity()
-                    .id(taxDto.id())
-                    .name(taxDto.name())
-                    .type(taxDto.type())
-                    .rate(taxDto.value)
-                    .deleted(taxDto.deleted());
+                    .id(taxDto.getId())
+                    .name(taxDto.getName())
+                    .type(taxDto.getType())
+                    .rate(taxDto.getValue())
+                    .deleted(taxDto.getDeleted());
         }
 }

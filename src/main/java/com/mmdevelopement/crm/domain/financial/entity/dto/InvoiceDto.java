@@ -1,19 +1,23 @@
 package com.mmdevelopement.crm.domain.financial.entity.dto;
 
 
+import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
 import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoiceEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class InvoiceDto {
 
     private Integer id;
 
     private Float total;
+
+    private Float remainingAmount;
 
     private Integer partnerId;
 
@@ -27,7 +31,7 @@ public class InvoiceDto {
 
     private String orderNumber;
 
-    private String direction;  // in or out
+    private InvoiceDirection direction;  // enum: IN or OUT <=> purchase or sale
 
     private Date invoiceDate;
 
@@ -35,31 +39,35 @@ public class InvoiceDto {
 
     private Boolean completed;
 
+    private List<InvoiceElementDto> elements;
+
     public static InvoiceDto toDto(InvoiceEntity invoiceEntity) {
         return new InvoiceDto()
-                .id(invoiceEntity.id())
-                .total(invoiceEntity.total())
-                .partnerId(invoiceEntity.partnerId())
-                .categoryId(invoiceEntity.categoryId())
-                .invoiceNumber(invoiceEntity.invoiceNumber())
-                .orderNumber(invoiceEntity.orderNumber())
-                .direction(invoiceEntity.direction())
-                .invoiceDate(invoiceEntity.invoiceDate())
-                .dueDate(invoiceEntity.dueDate())
-                .completed(invoiceEntity.completed());
+                .setId(invoiceEntity.id())
+                .setTotal(invoiceEntity.total())
+                .setRemainingAmount(invoiceEntity.remainingAmount())
+                .setPartnerId(invoiceEntity.partnerId())
+                .setCategoryId(invoiceEntity.categoryId())
+                .setInvoiceNumber(invoiceEntity.invoiceNumber())
+                .setOrderNumber(invoiceEntity.orderNumber())
+                .setDirection(invoiceEntity.direction())
+                .setInvoiceDate(invoiceEntity.invoiceDate())
+                .setDueDate(invoiceEntity.dueDate())
+                .setCompleted(invoiceEntity.completed());
     }
 
-    public static InvoiceEntity toEntity(InvoiceDto invoiceDto) {
+    public InvoiceEntity toEntity() {
         return new InvoiceEntity()
-                .id(invoiceDto.id())
-                .total(invoiceDto.total())
-                .partnerId(invoiceDto.partnerId())
-                .categoryId(invoiceDto.categoryId())
-                .invoiceNumber(invoiceDto.invoiceNumber())
-                .orderNumber(invoiceDto.orderNumber())
-                .direction(invoiceDto.direction())
-                .invoiceDate(invoiceDto.invoiceDate())
-                .dueDate(invoiceDto.dueDate())
-                .completed(invoiceDto.completed());
+                .id(getId())
+                .total(getTotal())
+                .remainingAmount(getRemainingAmount())
+                .partnerId(getPartnerId())
+                .categoryId(getCategoryId())
+                .invoiceNumber(getInvoiceNumber())
+                .orderNumber(getOrderNumber())
+                .direction(getDirection())
+                .invoiceDate(getInvoiceDate())
+                .dueDate(getDueDate())
+                .completed(getCompleted());
     }
 }

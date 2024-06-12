@@ -1,6 +1,7 @@
 package com.mmdevelopement.crm.domain.financial.entity;
 
 
+import com.mmdevelopement.crm.domain.financial.entity.enums.CategoryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

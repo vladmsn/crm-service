@@ -84,6 +84,7 @@ CREATE TABLE element (
 CREATE TABLE invoice (
     id SERIAL PRIMARY KEY,
     total_amount FLOAT NOT NULL,
+    remaining_amount FLOAT NOT NULL,
     partner_id INT NOT NULL,
     category_id INT,
     invoice_number VARCHAR(200) NOT NULL UNIQUE ,
@@ -117,15 +118,17 @@ CREATE TABLE invoice_payment (
     amount FLOAT NOT NULL,
     payment_date DATE NOT NULL,
     payment_method VARCHAR(200) NOT NULL,
-    invoice_id INTEGER NOT NULL,
+    invoice_id INTEGER,
+    reference VARCHAR(200),
     description VARCHAR(200),
     bank_account_id INT,
     partner_id INT,
-    reference VARCHAR(200),
     FOREIGN KEY (invoice_id) REFERENCES invoice(id),
     FOREIGN KEY (bank_account_id) REFERENCES bank_account(id),
     FOREIGN KEY (partner_id) REFERENCES partner(id)
 );
+
+CREATE INDEX invoice_id_index ON invoice_payment (reference);
 
 CREATE TABLE TRANSFER (
     id SERIAL PRIMARY KEY,

@@ -52,7 +52,7 @@ public class BankAccountController {
 
     @PutMapping("/")
     public BankAccountDto updateAccount(@RequestBody BankAccountDto bankAccountDto) {
-        if (bankAccountDto.id() == null) {
+        if (bankAccountDto.getId() == null) {
             throw new BadRequestException("Account id is required for update");
         }
 

@@ -5,6 +5,7 @@ import com.mmdevelopement.crm.domain.financial.entity.accounts.BankAccountEntity
 import com.mmdevelopement.crm.domain.financial.entity.accounts.TransferEntity;
 import com.mmdevelopement.crm.domain.financial.entity.dto.BankAccountDto;
 import com.mmdevelopement.crm.domain.financial.entity.dto.TransferDto;
+import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
 import com.mmdevelopement.crm.domain.financial.repository.BankAccountRepository;
 import com.mmdevelopement.crm.domain.financial.repository.TransferRepository;
 import com.mmdevelopement.crm.infrastructure.exceptions.BadRequestException;
@@ -111,18 +112,37 @@ public class BankAccountService {
         return transferRepository.save(transferEntity);
     }
 
+    public void executeTransaction(Integer bankAccountId, Float amount, InvoiceDirection direction) {
+        log.info("Executing transaction for account with id {} with amount {}", bankAccountId, amount);
+
+        BankAccountEntity bankAccountEntity = bankAccountRepository.findById(bankAccountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bank account with id " + bankAccountId + " not found"));
+
+        if (direction.equals(InvoiceDirection.IN)) {
+            bankAccountEntity.sold(bankAccountEntity.sold() + amount);
+        } else {
+            if (bankAccountEntity.sold() < amount) {
+                throw new BadRequestException("Not enough money in account with id " + bankAccountId);
+            }
+
+            bankAccountEntity.sold(bankAccountEntity.sold() - amount);
+        }
+
+        bankAccountRepository.save(bankAccountEntity);
+    }
+
     @Transactional
     public TransferDto makeTransfer(TransferDto transferDto) {
         validateTransfer(transferDto);
 
         // check if accounts exist
-        var fromAccount = getAccountById(transferDto.fromBankAccountId()).toEntity();
-        var toAccount = getAccountById(transferDto.toBankAccountId()).toEntity();
-        validateSufficientFunds(fromAccount, transferDto.amount());
+        var fromAccount = getAccountById(transferDto.getFromBankAccountId()).toEntity();
+        var toAccount = getAccountById(transferDto.getToBankAccountId()).toEntity();
+        validateSufficientFunds(fromAccount, transferDto.getAmount());
 
         // update accounts
-        fromAccount.sold(fromAccount.sold() - transferDto.amount());
-        toAccount.sold(toAccount.sold() + transferDto.amount());
+        fromAccount.sold(fromAccount.sold() - transferDto.getAmount());
+        toAccount.sold(toAccount.sold() + transferDto.getAmount());
 
         bankAccountRepository.save(fromAccount);
         bankAccountRepository.save(toAccount);
@@ -130,11 +150,11 @@ public class BankAccountService {
         // create transfer
         var transferEntity = saveTransfer(transferDto);
         log.info("Transfer successful from account {} to account {} with amount {}",
-                fromAccount.id(), toAccount.id(), transferDto.amount());
+                fromAccount.id(), toAccount.id(), transferDto.getAmount());
 
         return TransferDto.fromEntity(transferEntity)
-                .fromBankAccountName(fromAccount.name())
-                .toBankAccountName(toAccount.name());
+                .setFromBankAccountName(fromAccount.name())
+                .setToBankAccountName(toAccount.name());
     }
 
     @Transactional
@@ -163,15 +183,15 @@ public class BankAccountService {
     }
 
     private void validateTransfer(TransferDto transferDto) {
-        if (transferDto.fromBankAccountId() == null || transferDto.toBankAccountId() == null) {
+        if (transferDto.getFromBankAccountId() == null || transferDto.getToBankAccountName() == null) {
             throw new BadRequestException("From and to bank account ids cannot be null");
         }
 
-        if (transferDto.fromBankAccountId().equals(transferDto.toBankAccountId())) {
+        if (transferDto.getFromBankAccountId().equals(transferDto.getToBankAccountId())) {
             throw new BadRequestException("From and to bank account ids cannot be the same");
         }
 
-        if (transferDto.amount() == null || transferDto.amount() <= 0) {
+        if (transferDto.getAmount() == null || transferDto.getAmount() <= 0) {
             throw new BadRequestException("Amount must be greater than 0");
         }
     }

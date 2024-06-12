@@ -34,7 +34,7 @@ public class CategoryService {
     }
 
     public CategoryDto saveCategory(CategoryDto categoryDto) {
-        CategoryEntity categoryEntity =  categoryRepository.save(CategoryDto.toEntity(categoryDto));
+        CategoryEntity categoryEntity =  categoryRepository.save(categoryDto.toEntity());
 
         log.info("Category saved: {}", categoryEntity);
 

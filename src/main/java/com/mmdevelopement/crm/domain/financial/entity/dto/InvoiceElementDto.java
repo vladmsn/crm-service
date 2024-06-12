@@ -1,33 +1,28 @@
 package com.mmdevelopement.crm.domain.financial.entity.dto;
 
-
-import com.mmdevelopement.crm.domain.financial.entity.ElementEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class InvoiceElementDto {
 
     private Integer elementId;
     private String elementName;
-    private Float elementPrice;
     private String elementDescription;
 
-    private Integer taxId;
+    private Float elementPrice;
     private Float elementTax;
-
     private Integer quantity;
 
-    public static InvoiceElementDto fromElement(ElementDto entity, Integer quantity, String direction, Float taxRate) {
+    public static InvoiceElementDto fromElement(ElementDto elementDto, Integer quantity, Float elementPrice, Float taxRate) {
         return new InvoiceElementDto()
-                .elementId(entity.id())
-                .elementName(entity.name())
-                .elementPrice(direction.equals("in") ? entity.acquisitionPrice() : entity.sellingPrice())
-                .elementDescription(entity.description())
-                .quantity(quantity)
-                .taxId(entity.taxId())
-                .elementTax(taxRate);
+                .setElementId(elementDto.getId())
+                .setElementName(elementDto.getName())
+                .setElementPrice(elementPrice)
+                .setElementDescription(elementDto.getDescription())
+                .setQuantity(quantity)
+                .setElementTax(taxRate);
     }
 }

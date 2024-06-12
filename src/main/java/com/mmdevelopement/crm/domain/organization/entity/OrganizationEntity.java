@@ -30,6 +30,9 @@ public class OrganizationEntity {
     @Column(name = "db_schema_name", nullable = false, length = 200)
     private String dbSchemaName;
 
+    @Column(name = "color_code", nullable = false, length = 200)
+    private String colorCode;
+
     @Column(name = "license", nullable = false, unique = true, updatable = false)
     private String license = UUID.randomUUID().toString();
 

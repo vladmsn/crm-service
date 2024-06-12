@@ -1,6 +1,7 @@
 package com.mmdevelopement.crm.domain.organization.controller;
 
 import com.mmdevelopement.crm.domain.organization.entity.dto.OrganizationInfoDto;
+import com.mmdevelopement.crm.domain.organization.entity.dto.OrganizationInvoiceInfoDto;
 import com.mmdevelopement.crm.domain.organization.entity.wrapper.OrganizationWrapper;
 import com.mmdevelopement.crm.domain.organization.entity.dto.OrganizationDto;
 import com.mmdevelopement.crm.domain.organization.service.OrganizationService;
@@ -27,6 +28,11 @@ public class OrganizationController {
     @GetMapping("/info")
     public OrganizationInfoDto getCurrentOrganizationInfo() {
         return organizationService.getCurrentOrganizationInfo();
+    }
+
+    @GetMapping("/invoice-preferences")
+    public OrganizationInvoiceInfoDto getCurrentOrganizationInvoicePreferences() {
+        return organizationService.getCurrentOrganizationInvoiceInfo();
     }
 
     @GetMapping("/find")

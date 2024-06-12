@@ -1,4 +1,4 @@
-package com.mmdevelopement.crm.domain.financial.entity.invoices;
+package com.mmdevelopement.crm.domain.organization.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,25 +12,19 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true, fluent = true)
 @Entity
-@Table(name = "invoice_element")
-public class InvoiceElementEntity {
+@Table(name = "organization_invoice_preferences")
+public class OrganizationInvoicePreferencesEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "invoice_id")
-    private Integer invoiceId;
+    @Column(name = "organization_id")
+    private Integer organizationId;
 
-    @Column(name = "element_id")
-    private Integer elementId;
+    @Column(name = "prefix")
+    private String prefix;
 
-    @Column(name = "tax")
-    private Float tax;
-
-    @Column(name = "quantity")
-    private Integer quantity;
-
-    @Column(name = "price")
-    private Float price;
+    @Column(name = "starting_number")
+    private Integer startingNumber;
 }

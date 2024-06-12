@@ -33,30 +33,23 @@ public class InvoiceController {
         return invoiceService.getInvoiceById(id);
     }
 
-    @GetMapping("/{id}/elements")
-    public List<InvoiceElementDto> getInvoiceElements(@PathVariable Integer id) {
-        return invoiceService.getInvoiceElements(id);
-    }
-
     @PostMapping("/")
     public InvoiceDto createInvoice(@RequestBody InvoiceDto invoiceDto) {
         return invoiceService.createInvoice(invoiceDto);
     }
 
-    @PostMapping("/{id}/elements")
-    public List<InvoiceElementDto> addInvoiceElement(@PathVariable Integer id,
-                                                     @RequestBody Map<InvoiceElementDto, TaxDto> invoiceElementMap) {
-        return invoiceService.addInvoiceElements(id, invoiceElementMap);
+    @GetMapping("/payments")
+    public List<InvoicePaymentDto> getAllInvoicePayments() {
+        return invoiceService.getAllInvoicePayments();
     }
 
-    @GetMapping("/{id}/payments")
-    public List<InvoicePaymentDto> getInvoicePayments(@PathVariable Integer id) {
-        return invoiceService.getInvoicePayments(id);
+    @GetMapping("/identifier/payments")
+    public List<InvoicePaymentDto> getInvoicePayments(@PathVariable Integer identifier) {
+        return invoiceService.getInvoicePayments(identifier);
     }
 
-    @PostMapping("/{id}/payments")
-    public InvoicePaymentDto addInvoicePayment(@PathVariable Integer id,
-                                           @RequestBody InvoicePaymentDto invoicePaymentDto) {
-        return invoiceService.addInvoicePayment(id, invoicePaymentDto);
+    @PostMapping("/payments")
+    public InvoicePaymentDto addInvoicePayment(@RequestBody InvoicePaymentDto invoicePaymentDto) {
+        return invoiceService.addInvoicePayment(invoicePaymentDto);
     }
 }

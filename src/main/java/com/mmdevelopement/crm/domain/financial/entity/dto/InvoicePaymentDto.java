@@ -1,6 +1,7 @@
 package com.mmdevelopement.crm.domain.financial.entity.dto;
 
 
+import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
 import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoicePaymentEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -9,47 +10,48 @@ import java.util.Date;
 
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class InvoicePaymentDto {
 
     private Integer id;
     private Integer invoiceId;
+    private String reference;
     private Integer partnerId;
     private String partnerName;
     private String partnerCUI;
 
     private Float amount;
-    private String direction;
+    private InvoiceDirection direction;
     private Integer bankAccountId;
     private String paymentMethod;
     private String description;
     private Date paymentDate;
 
     public static InvoicePaymentDto fromEntity(InvoicePaymentEntity invoicePaymentEntity, String partnerName,
-                                               String partnerCUI, String direction) {
+                                               String partnerCUI, InvoiceDirection direction) {
         return new InvoicePaymentDto()
-                .id(invoicePaymentEntity.id())
-                .invoiceId(invoicePaymentEntity.invoiceId())
-                .partnerId(invoicePaymentEntity.partnerId())
-                .partnerName(partnerName)
-                .partnerCUI(partnerCUI)
-                .bankAccountId(invoicePaymentEntity.bankAccountId())
-                .amount(invoicePaymentEntity.amount())
-                .direction(direction)
-                .paymentMethod(invoicePaymentEntity.paymentMethod())
-                .description(invoicePaymentEntity.description())
-                .paymentDate(invoicePaymentEntity.paymentDate());
+                .setId(invoicePaymentEntity.id())
+                .setInvoiceId(invoicePaymentEntity.invoiceId())
+                .setPartnerId(invoicePaymentEntity.partnerId())
+                .setPartnerName(partnerName)
+                .setPartnerCUI(partnerCUI)
+                .setAmount(invoicePaymentEntity.amount())
+                .setDirection(direction)
+                .setBankAccountId(invoicePaymentEntity.bankAccountId())
+                .setPaymentMethod(invoicePaymentEntity.paymentMethod())
+                .setDescription(invoicePaymentEntity.description())
+                .setPaymentDate(invoicePaymentEntity.paymentDate());
     }
 
     public InvoicePaymentEntity toEntity() {
         return new InvoicePaymentEntity()
-                .id(id)
-                .invoiceId(invoiceId)
-                .partnerId(partnerId)
-                .bankAccountId(bankAccountId)
-                .amount(amount)
-                .paymentMethod(paymentMethod)
-                .description(description)
-                .paymentDate(paymentDate);
+                .id(getId())
+                .invoiceId(getInvoiceId())
+                .partnerId(getPartnerId())
+                .amount(getAmount())
+                .bankAccountId(getBankAccountId())
+                .paymentMethod(getPaymentMethod())
+                .description(getDescription())
+                .paymentDate(getPaymentDate());
     }
 }

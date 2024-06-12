@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true, fluent = true)
+@Accessors(chain = true)
 public class PartnerDto {
 
     private Integer id;
@@ -26,20 +26,20 @@ public class PartnerDto {
 
     public static PartnerDto fromEntity(PartnerEntity partnerEntity) {
         return new PartnerDto()
-                .id(partnerEntity.id())
-                .name(partnerEntity.name())
-                .email(partnerEntity.email())
-                .phoneNumber(partnerEntity.phoneNumber())
-                .website(partnerEntity.website())
-                .reference(partnerEntity.reference())
-                .city(partnerEntity.CUI())
-                .address(partnerEntity.address())
-                .city(partnerEntity.city())
-                .county(partnerEntity.county())
-                .country(partnerEntity.country())
-                .postalCode(partnerEntity.postalCode())
-                .image(partnerEntity.image() != null ? ImageUtils.encodeImage(partnerEntity.image()) : null)
-                .saved(partnerEntity.saved());
+                .setId(partnerEntity.id())
+                .setImage(partnerEntity.name())
+                .setEmail(partnerEntity.email())
+                .setPhoneNumber(partnerEntity.phoneNumber())
+                .setWebsite(partnerEntity.website())
+                .setReference(partnerEntity.reference())
+                .setCUI(partnerEntity.CUI())
+                .setAddress(partnerEntity.address())
+                .setCity(partnerEntity.city())
+                .setCounty(partnerEntity.county())
+                .setCountry(partnerEntity.country())
+                .setPostalCode(partnerEntity.postalCode())
+                .setImage(partnerEntity.image() != null ? ImageUtils.encodeImage(partnerEntity.image()) : null)
+                .setSaved(partnerEntity.saved());
     }
 
     public PartnerEntity toEntity() {
