@@ -1,6 +1,5 @@
 package com.mmdevelopement.crm.domain.financial.service;
 
-import com.mmdevelopement.crm.config.security.context.RequestContextHolder;
 import com.mmdevelopement.crm.domain.financial.entity.accounts.BankAccountEntity;
 import com.mmdevelopement.crm.domain.financial.entity.accounts.TransferEntity;
 import com.mmdevelopement.crm.domain.financial.entity.dto.BankAccountDto;
@@ -26,19 +25,6 @@ public class BankAccountService {
     private final BankAccountRepository bankAccountRepository;
 
     private final TransferRepository transferRepository;
-
-    // apis to be implemented
-    // 1. create account
-    // 2. update account
-    // 3. delete account
-    // 4. get account by id -> detailed view maybe (with transfers tied to account)
-    // 5. get all accounts -> id, name, balance, number
-
-    // 6. transfer money between accounts
-    // 7. update transfer
-    // 8. delete transfer
-    // 9. get transfer by id
-    // 10. get all transfers
 
     public List<BankAccountDto> getAllAccounts() {
         log.debug("Getting all bank accounts");
@@ -112,6 +98,7 @@ public class BankAccountService {
         return transferRepository.save(transferEntity);
     }
 
+    @Transactional
     public void executeTransaction(Integer bankAccountId, Float amount, InvoiceDirection direction) {
         log.info("Executing transaction for account with id {} with amount {}", bankAccountId, amount);
 
@@ -133,6 +120,9 @@ public class BankAccountService {
 
     @Transactional
     public TransferDto makeTransfer(TransferDto transferDto) {
+        log.info("Making transfer from account {} to account {} with amount {}",
+                transferDto.getFromBankAccountId(), transferDto.getToBankAccountId(), transferDto.getAmount());
+
         validateTransfer(transferDto);
 
         // check if accounts exist
@@ -197,8 +187,23 @@ public class BankAccountService {
     }
 
     private void validateSufficientFunds(BankAccountEntity fromAccount, Double amount) {
-        if (fromAccount.sold() < amount) {
+        if (fromAccount.id() != 1  || fromAccount.sold() < amount) {
             throw new BadRequestException("Not enough money in account with id " + fromAccount.id());
         }
+    }
+
+    public void rollbackTransaction(Integer integer, Float amount, String direction) {
+        log.info("Rolling back transaction for account with id {} with amount {}", integer, amount);
+
+        BankAccountEntity bankAccountEntity = bankAccountRepository.findById(integer)
+                .orElseThrow(() -> new ResourceNotFoundException("Bank account with id " + integer + " not found"));
+
+        if (direction.equals(InvoiceDirection.IN.toString())) {
+            bankAccountEntity.sold(bankAccountEntity.sold() - amount);
+        } else {
+            bankAccountEntity.sold(bankAccountEntity.sold() + amount);
+        }
+
+        bankAccountRepository.save(bankAccountEntity);
     }
 }

@@ -19,11 +19,13 @@ import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundExceptio
 import com.mmdevelopement.crm.utils.ImageUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrganizationService {
@@ -38,7 +40,8 @@ public class OrganizationService {
                 .map(organizationEntity -> OrganizationDto.builder()
                         .name(organizationEntity.name())
                         .tenantId(organizationEntity.tenantId())
-                        .colorCode(organizationEntity.colorCode())
+                        .colorCodeNavBar(organizationEntity.colorCodeNavBar())
+                        .colorLeftSideBar(organizationEntity.colorLeftSideBar())
                         .license(organizationEntity.license())
                         .dbSchemaName(organizationEntity.dbSchemaName())
                         .build())
@@ -49,7 +52,7 @@ public class OrganizationService {
         return organizationInfoRepository.findAll()
                 .stream()
                 .map(organizationInfoEntity -> OrganizationInfoDto.builder()
-                        .telephone(organizationInfoEntity.telephone())
+                        .phoneNumber(organizationInfoEntity.phoneNumber())
                         .email(organizationInfoEntity.email())
                         .image(organizationInfoEntity.image() != null ? "present, but omitted" : null)
                         .CUI(organizationInfoEntity.CUI())
@@ -70,11 +73,14 @@ public class OrganizationService {
         }
 
         return Optional.of(OrganizationDto.builder()
+                .id(organizationEntity.id())
                 .name(organizationEntity.name())
                 .tenantId(organizationEntity.tenantId())
                 .license(organizationEntity.license())
                 .dbSchemaName(organizationEntity.dbSchemaName())
-                .colorCode(organizationEntity.colorCode())
+                .colorCodeNavBar(organizationEntity.colorCodeNavBar())
+                .colorLeftSideBar(organizationEntity.colorLeftSideBar())
+                .version(1)
                 .status(organizationEntity.status())
                 .build());
     }
@@ -96,6 +102,7 @@ public class OrganizationService {
     }
 
     public OrganizationDto getCurrentOrganization() {
+        log.info("Getting current organization for tenant: {}", RequestContextHolder.getCurrentTenantId());
         String tenantId = RequestContextHolder.getCurrentTenantId();
 
         return findOrganizationByTenantId(tenantId)
@@ -103,16 +110,19 @@ public class OrganizationService {
     }
 
     public OrganizationInfoDto getCurrentOrganizationInfo() {
+        log.info("Getting current organization info for tenant: {}", RequestContextHolder.getCurrentTenantId());
+
         String tenantId = RequestContextHolder.getCurrentTenantId();
 
         OrganizationEntity organizationEntity = organizationRepository.findByTenantId(tenantId);
         OrganizationInfoEntity organizationInfoEntity = organizationInfoRepository.findByOrganizationId(organizationEntity.id());
 
         return OrganizationInfoDto.builder()
-                .telephone(organizationInfoEntity.telephone())
+                .phoneNumber(organizationInfoEntity.phoneNumber())
                 .email(organizationInfoEntity.email())
                 .image(organizationInfoEntity.image() != null ? ImageUtils.encodeImage(organizationInfoEntity.image()): null)
                 .CUI(organizationInfoEntity.CUI())
+                .regCom(organizationInfoEntity.regCom())
                 .address(organizationInfoEntity.address())
                 .city(organizationInfoEntity.city())
                 .county(organizationInfoEntity.county())
@@ -128,6 +138,27 @@ public class OrganizationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Organization invoice info not found"));
     }
 
+    public OrganizationInvoiceInfoDto updateCurrentOrganizationInvoiceInfo(OrganizationInvoiceInfoDto organizationInvoiceInfoDto) {
+        String tenantId = RequestContextHolder.getCurrentTenantId();
+
+        OrganizationEntity organizationEntity = organizationRepository.findByTenantId(tenantId);
+        OrganizationInvoicePreferencesEntity organizationInvoicePreferencesEntity = organizationInvoicePreferencesRepository.findByOrganizationId(organizationEntity.id());
+
+        organizationInvoicePreferencesEntity.prefix(organizationInvoiceInfoDto.prefix());
+        organizationInvoicePreferencesEntity.startingNumber(organizationInvoiceInfoDto.startingNumber());
+        organizationInvoicePreferencesEntity.notes(organizationInvoiceInfoDto.notes());
+        organizationInvoicePreferencesEntity.footer(organizationInvoiceInfoDto.footer());
+        organizationInvoicePreferencesEntity.subHeader(organizationInvoiceInfoDto.subHeader());
+        organizationInvoicePreferencesRepository.save(organizationInvoicePreferencesEntity);
+
+        return OrganizationInvoiceInfoDto.builder()
+                .id(organizationInvoicePreferencesEntity.id())
+                .organizationId(organizationInvoicePreferencesEntity.organizationId())
+                .prefix(organizationInvoicePreferencesEntity.prefix())
+                .startingNumber(organizationInvoicePreferencesEntity.startingNumber())
+                .build();
+    }
+
     @Transactional
     public OrganizationDto createOrganization(OrganizationWrapper organizationWrapper) {
 
@@ -141,13 +172,13 @@ public class OrganizationService {
 
         OrganizationInfoEntity organizationInfoEntity = new OrganizationInfoEntity()
                 .organizationId(organizationEntity.id())
-                .telephone(organizationWrapper.getTelephone())
+                .phoneNumber(organizationWrapper.getPhone())
                 .email(organizationWrapper.getEmail())
                 .image(ImageUtils.decodeImage(organizationWrapper.getImage()))
                 .CUI(organizationWrapper.getCUI())
                 .address(organizationWrapper.getAddress())
                 .city(organizationWrapper.getCity())
-                .county(organizationWrapper.getState())
+                .county(organizationWrapper.getCounty())
                 .country(organizationWrapper.getCountry())
                 .postalCode(organizationWrapper.getPostalCode());
 
@@ -169,24 +200,28 @@ public class OrganizationService {
         organizationRepository.save(organizationEntity);
 
         OrganizationInfoEntity organizationInfoEntity = organizationInfoRepository.findByOrganizationId(organizationEntity.id());
-        organizationInfoEntity.telephone(organizationWrapper.getTelephone());
+        organizationInfoEntity.phoneNumber(organizationWrapper.getPhone());
         organizationInfoEntity.email(organizationWrapper.getEmail());
         organizationInfoEntity.image(ImageUtils.decodeImage(organizationWrapper.getImage()));
         organizationInfoEntity.CUI(organizationWrapper.getCUI());
         organizationInfoEntity.address(organizationWrapper.getAddress());
         organizationInfoEntity.city(organizationWrapper.getCity());
-        organizationInfoEntity.county(organizationWrapper.getState());
+        organizationInfoEntity.county(organizationWrapper.getCounty());
         organizationInfoEntity.country(organizationWrapper.getCountry());
         organizationInfoEntity.postalCode(organizationWrapper.getPostalCode());
         organizationInfoRepository.save(organizationInfoEntity);
 
         return OrganizationDto.builder()
+                .id(organizationEntity.id())
                 .name(organizationEntity.name())
                 .tenantId(organizationEntity.tenantId())
                 .license(organizationEntity.license())
                 .dbSchemaName(organizationEntity.dbSchemaName())
+                .colorLeftSideBar(organizationEntity.colorLeftSideBar())
+                .colorCodeNavBar(organizationEntity.colorCodeNavBar())
+                .status(organizationEntity.status())
+                .version(1)
                 .build();
-
     }
 
     public void updateOrganizationStatus(String tenantId, String status) {
@@ -194,5 +229,4 @@ public class OrganizationService {
         organizationEntity.status(status);
         organizationRepository.save(organizationEntity);
     }
-
 }

@@ -1,6 +1,5 @@
 package com.mmdevelopement.crm.domain.financial.entity.invoices;
 
-import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -48,7 +47,7 @@ public class InvoiceEntity {
     private String orderNumber;
 
     @Column(name = "direction")
-    private InvoiceDirection direction;
+    private String direction;
 
     @Column(name = "invoice_date")
     private Date invoiceDate;

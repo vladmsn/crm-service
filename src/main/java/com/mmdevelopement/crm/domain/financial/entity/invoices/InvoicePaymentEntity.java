@@ -31,6 +31,9 @@ public class InvoicePaymentEntity {
     @Column(name = "partner_id")
     private Integer partnerId;
 
+    @Column(name = "category_id")
+    private Integer categoryId;
+
     @Column(name = "bank_account_id")
     private Integer bankAccountId;
 
@@ -39,6 +42,9 @@ public class InvoicePaymentEntity {
 
     @Column(name = "payment_method")
     private String paymentMethod;
+
+    @Column(name = "payment_direction")
+    private String paymentDirection;
 
     @Column(name = "description")
     private String description;

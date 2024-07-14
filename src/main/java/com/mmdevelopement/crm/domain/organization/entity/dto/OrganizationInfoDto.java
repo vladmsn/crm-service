@@ -4,10 +4,11 @@ import lombok.Builder;
 
 @Builder
 public record OrganizationInfoDto(
-        String telephone,
+        String phoneNumber,
         String email,
         String image,
         String CUI,
+        String regCom,
         String address,
         String city,
         String county,

@@ -16,6 +16,7 @@ public class PartnerDto {
     private String website;
     private String reference;
     private String CUI;
+    private String regCom;
     private String address;
     private String city;
     private String county;
@@ -33,6 +34,7 @@ public class PartnerDto {
                 .setWebsite(partnerEntity.website())
                 .setReference(partnerEntity.reference())
                 .setCUI(partnerEntity.CUI())
+                .setRegCom(partnerEntity.regCom())
                 .setAddress(partnerEntity.address())
                 .setCity(partnerEntity.city())
                 .setCounty(partnerEntity.county())
@@ -51,6 +53,7 @@ public class PartnerDto {
                 .website(website)
                 .reference(reference)
                 .CUI(CUI)
+                .regCom(regCom)
                 .address(address)
                 .city(city)
                 .county(county)

@@ -4,24 +4,27 @@ package com.mmdevelopement.crm.domain.financial.service;
 import com.mmdevelopement.crm.domain.financial.entity.dto.InvoiceDto;
 import com.mmdevelopement.crm.domain.financial.entity.dto.InvoiceElementDto;
 import com.mmdevelopement.crm.domain.financial.entity.dto.InvoicePaymentDto;
-import com.mmdevelopement.crm.domain.financial.entity.dto.TaxDto;
 import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
 import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoiceElementEntity;
 import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoiceEntity;
 import com.mmdevelopement.crm.domain.financial.entity.invoices.QInvoiceEntity;
 import com.mmdevelopement.crm.domain.financial.repository.InvoicePaymentRepository;
 import com.mmdevelopement.crm.domain.financial.repository.InvoiceRepository;
+import com.mmdevelopement.crm.domain.organization.service.OrganizationService;
 import com.mmdevelopement.crm.domain.partner.service.PartnerService;
 import com.mmdevelopement.crm.infrastructure.exceptions.BadRequestException;
 import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundException;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 
@@ -42,11 +45,12 @@ public class InvoiceService {
 
     private final BankAccountService bankAccountService;
 
+    private final OrganizationService organizationService;
 
     // ==============================  Invoices ==============================
 
     public List<InvoiceDto> getAllInvoices() {
-        log.debug("Getting all invoices");
+        log.info("Getting all invoices");
 
         return invoiceRepository.findAll()
                 .stream()
@@ -60,7 +64,7 @@ public class InvoiceService {
 
 
     public List<InvoiceDto> findInvoices(Predicate predicate) {
-        log.debug("Finding invoices");
+        log.info("Finding invoices");
 
         return StreamSupport.stream(invoiceRepository.findAll(predicate).spliterator(), false)
                 .map(invoice -> {
@@ -72,7 +76,7 @@ public class InvoiceService {
     }
 
     public InvoiceDto getInvoiceById(Integer id) {
-        log.debug("Getting invoice by id: {}", id);
+        log.info("Getting invoice by id: {}", id);
 
         return invoiceRepository.findById(id)
                 .map(InvoiceDto::toDto)
@@ -84,8 +88,29 @@ public class InvoiceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
     }
 
+    public Integer getNextInvoiceNumber() {
+        log.info("Getting next invoice number");
+
+        var invoiceInfo = organizationService.getCurrentOrganizationInvoiceInfo();
+
+        BooleanExpression predicate = QInvoiceEntity.invoiceEntity.direction.eq(InvoiceDirection.OUT.name());
+        OrderSpecifier<Integer> orderSpecifier = QInvoiceEntity.invoiceEntity.id.desc();
+
+        return StreamSupport.stream(invoiceRepository.findAll(predicate, orderSpecifier).spliterator(), false)
+                .findFirst()
+                .map(invoice -> invoice.invoiceNumber())
+                .map(invoiceNumber -> {
+                    String prefix = invoiceInfo.prefix();
+                    return Integer.parseInt(invoiceNumber.replace(prefix, ""));
+                })
+                .map(number -> number + 1)
+                .orElse(invoiceInfo.startingNumber());
+    }
+
     @Transactional
     public InvoiceDto createInvoice(InvoiceDto invoiceDto) {
+        log.info("Creating invoice: {}", invoiceDto);
+
         InvoiceEntity invoice = invoiceDto.toEntity();
         invoice.remainingAmount(invoice.total());
 
@@ -99,6 +124,25 @@ public class InvoiceService {
         log.info("Created invoice: {}", savedInvoice);
 
         return InvoiceDto.toDto(savedInvoice);
+    }
+
+    @Transactional
+    public void deleteInvoice(Integer id) {
+        log.info("Deleting invoice with id: {}", id);
+
+        InvoiceEntity invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+
+        if (!Objects.equals(invoice.remainingAmount(), invoice.total())) {
+            invoicePaymentRepository.findAllByInvoiceId(id)
+                    .forEach(invoicePayment -> {
+                        bankAccountService.rollbackTransaction(invoicePayment.bankAccountId(), invoicePayment.amount(), invoicePayment.paymentDirection());
+                        invoicePaymentRepository.delete(invoicePayment);
+                    });
+        }
+
+        invoiceRepository.delete(invoice);
+        log.info("Deleted invoice: {}", invoice);
     }
 
     // ================================== Invoice Elements ==================================
@@ -155,17 +199,29 @@ public class InvoiceService {
 
     // ================== Invoice Payments ==================
 
+    public List<InvoicePaymentDto> findPayments(Predicate predicate) {
+        log.info("Finding invoice payments");
+
+        return StreamSupport.stream(invoicePaymentRepository.findAll(predicate).spliterator(), false)
+                .map(invoicePayment -> {
+                    var partner = partnerService.getPartnerById(invoicePayment.partnerId());
+                    var category = categoryService.getCategoryById(invoicePayment.categoryId());
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), category.getName(),
+                            InvoiceDirection.fromString(invoicePayment.paymentDirection()));
+                })
+                .toList();
+    }
+
     public List<InvoicePaymentDto> getAllInvoicePayments() {
-        log.debug("Getting all invoice payments");
+        log.info("Getting all invoice payments");
 
         return invoicePaymentRepository.findAll()
                 .stream()
                 .map(invoicePayment -> {
                     var partner = partnerService.getPartnerById(invoicePayment.partnerId());
-                    var invoice = invoiceRepository.findById(invoicePayment.invoiceId())
-                            .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
-
-                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), invoice.direction());
+                    var category = categoryService.getCategoryById(invoicePayment.categoryId());
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), category.getName(),
+                            InvoiceDirection.fromString(invoicePayment.paymentDirection()));
                 })
                 .toList();
     }
@@ -176,7 +232,7 @@ public class InvoiceService {
             throw new BadRequestException("Invoice identifier is required");
         }
 
-        log.debug("Getting payments for invoice with identifier: {}", id);
+        log.info("Getting payments for invoice with identifier: {}", id);
 
         InvoiceEntity invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
@@ -186,7 +242,10 @@ public class InvoiceService {
                 .stream()
                 .map(invoicePayment -> {
                     var partner = partnerService.getPartnerById(invoicePayment.partnerId());
-                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), invoice.direction());
+                    var category = categoryService.getCategoryById(invoicePayment.categoryId());
+
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), category.getName(),
+                            InvoiceDirection.valueOf(invoice.direction()));
                 })
                 .toList();
     }
@@ -196,22 +255,30 @@ public class InvoiceService {
 
         if (invoicePaymentDto.getInvoiceId() == null && invoicePaymentDto.getReference() == null
                                                         || invoicePaymentDto.getBankAccountId() == null) {
-            throw new BadRequestException("Invoice id or reference is required");
+            throw new BadRequestException("Invoice id oe reference, bank account id are required");
         }
 
-        // look-up checks
-        if (invoicePaymentDto.getInvoiceId() != null) {
-            getInvoiceById(invoicePaymentDto.getInvoiceId());
-        }
         partnerService.getPartnerById(invoicePaymentDto.getPartnerId());
 
         var savedPayment = invoicePaymentRepository.save(invoicePaymentDto.toEntity());
         log.info("Added payment to invoice: {}", savedPayment);
 
         bankAccountService.executeTransaction(invoicePaymentDto.getBankAccountId(), savedPayment.amount(), invoicePaymentDto.getDirection());
+        log.info("Executed transaction for payment: {}", savedPayment);
+
+        if (invoicePaymentDto.getInvoiceId() != null) {
+            InvoiceEntity invoice = invoiceRepository.findById(invoicePaymentDto.getInvoiceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+
+            invoice.remainingAmount(invoice.remainingAmount() - savedPayment.amount());
+            invoiceRepository.save(invoice);
+        }
 
         var partner = partnerService.getPartnerById(savedPayment.partnerId());
-        return InvoicePaymentDto.fromEntity(savedPayment, partner.getName(), partner.getCUI(), invoicePaymentDto.getDirection());
+        var category = categoryService.getCategoryById(invoicePaymentDto.getCategoryId());
+
+        return InvoicePaymentDto.fromEntity(savedPayment, partner.getName(), partner.getCUI(), category.getName(),
+                invoicePaymentDto.getDirection());
     }
 
     // ================== Private methods ==================
@@ -224,5 +291,4 @@ public class InvoiceService {
         invoiceDto.setPartnerName(partner.getName());
         invoiceDto.setCategoryName(category.getName());
     }
-
 }

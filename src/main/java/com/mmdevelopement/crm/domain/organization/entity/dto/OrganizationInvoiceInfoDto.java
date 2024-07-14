@@ -7,5 +7,8 @@ public record OrganizationInvoiceInfoDto (
         Integer id,
         Integer organizationId,
         String prefix,
-        Integer startingNumber) {
+        Integer startingNumber,
+        String notes,
+        String footer,
+        String subHeader) {
 }

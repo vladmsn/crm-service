@@ -38,7 +38,8 @@ CREATE TABLE partner (
      reference VARCHAR(200),
      profile_picture BYTEA,
      CUI VARCHAR(20) NOT NULL UNIQUE,
-     currency_code VARCHAR(3) NOT NULL,
+     reg_com VARCHAR(20) NOT NULL,
+     currency_code VARCHAR(3) DEFAULT 'RON',
      address VARCHAR(200) NOT NULL,
      city VARCHAR(200) NOT NULL,
      county VARCHAR(200),
@@ -61,7 +62,7 @@ CREATE TABLE category (
 create table tax (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
-    type VARCHAR(200) NOT NULL,
+    type VARCHAR(200),
     rate FLOAT NOT NULL,
     deleted BOOLEAN DEFAULT FALSE
 );
@@ -118,12 +119,15 @@ CREATE TABLE invoice_payment (
     amount FLOAT NOT NULL,
     payment_date DATE NOT NULL,
     payment_method VARCHAR(200) NOT NULL,
+    direction VARCHAR(200) NOT NULL,
     invoice_id INTEGER,
+    category_id INT,
     reference VARCHAR(200),
     description VARCHAR(200),
     bank_account_id INT,
     partner_id INT,
     FOREIGN KEY (invoice_id) REFERENCES invoice(id),
+    FOREIGN KEY (category_id) REFERENCES category(id),
     FOREIGN KEY (bank_account_id) REFERENCES bank_account(id),
     FOREIGN KEY (partner_id) REFERENCES partner(id)
 );

@@ -35,6 +35,11 @@ public class OrganizationController {
         return organizationService.getCurrentOrganizationInvoiceInfo();
     }
 
+    @PutMapping("/invoice-preferences")
+    public OrganizationInvoiceInfoDto updateCurrentOrganizationInvoicePreferences(@RequestBody OrganizationInvoiceInfoDto organizationInvoiceInfoDto) {
+        return organizationService.updateCurrentOrganizationInvoiceInfo(organizationInvoiceInfoDto);
+    }
+
     @GetMapping("/find")
     @Secured("ROLE_SUPER_ADMIN")
     public OrganizationDto getOrganizationByTenantId(@RequestParam String tenantId) {

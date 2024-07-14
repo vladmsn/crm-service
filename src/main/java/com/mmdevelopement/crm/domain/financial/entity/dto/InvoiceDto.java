@@ -50,7 +50,7 @@ public class InvoiceDto {
                 .setCategoryId(invoiceEntity.categoryId())
                 .setInvoiceNumber(invoiceEntity.invoiceNumber())
                 .setOrderNumber(invoiceEntity.orderNumber())
-                .setDirection(invoiceEntity.direction())
+                .setDirection(InvoiceDirection.fromString(invoiceEntity.direction()))
                 .setInvoiceDate(invoiceEntity.invoiceDate())
                 .setDueDate(invoiceEntity.dueDate())
                 .setCompleted(invoiceEntity.completed());
@@ -65,7 +65,7 @@ public class InvoiceDto {
                 .categoryId(getCategoryId())
                 .invoiceNumber(getInvoiceNumber())
                 .orderNumber(getOrderNumber())
-                .direction(getDirection())
+                .direction(getDirection().toString())
                 .invoiceDate(getInvoiceDate())
                 .dueDate(getDueDate())
                 .completed(getCompleted());

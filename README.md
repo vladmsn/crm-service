@@ -57,7 +57,7 @@ This project uses Docker Compose to run PostgreSQL and Keycloak, ensuring a quic
 To start all services, navigate to the project's root directory and run:
 
 ```bash
-docker-compose up -d
+docker-compose -f docker-compose-local.yml up -d
 ```
 
 ## Configuration

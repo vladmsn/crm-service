@@ -14,7 +14,7 @@ public class CategoryDto {
 
     private String name;
 
-    private CategoryType type;
+    private String type;
 
     private String colorCode;
 
@@ -23,7 +23,7 @@ public class CategoryDto {
         return new CategoryDto()
                 .setId(categoryEntity.id())
                 .setName(categoryEntity.name())
-                .setType(CategoryType.fromString(categoryEntity.type()))
+                .setType(categoryEntity.type())
                 .setColorCode(categoryEntity.colorCode());
     }
 
@@ -31,7 +31,7 @@ public class CategoryDto {
         return new CategoryEntity()
                 .id(getId())
                 .name(getName())
-                .type(CategoryType.fromEnum(getType()))
+                .type(getType())
                 .colorCode(getColorCode());
     }
 

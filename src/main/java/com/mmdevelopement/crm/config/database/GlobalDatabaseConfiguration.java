@@ -6,6 +6,7 @@ package com.mmdevelopement.crm.config.database;
 
 
 import com.mmdevelopement.crm.config.database.properties.DatabaseConnectionProperties;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,7 +43,7 @@ import java.util.Properties;
 public class GlobalDatabaseConfiguration {
 
     public static final String[] ORGANIZATION_MODULE_PACKAGES = {
-            "com.mmdevelopement.crm.domain.organization"
+            "com.mmdevelopement.crm.domain.organization.*"
     };
 
     private final DatabaseConnectionProperties databaseConnectionProperties;
@@ -55,6 +56,7 @@ public class GlobalDatabaseConfiguration {
                 .username(databaseConnectionProperties.getUsername())
                 .password(databaseConnectionProperties.getPassword())
                 .driverClassName(databaseConnectionProperties.getDriverClassName())
+                .type(HikariDataSource.class)
                 .build();
     }
 

@@ -15,12 +15,14 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 
 import java.util.List;
 import static com.mmdevelopement.crm.domain.user.entity.dto.UserDto.formatRoles;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -42,6 +44,8 @@ public class UserService {
     }
 
     public UserDto getCurrentUser() {
+        log.info("Getting current user");
+
         String userGuid = RequestContextHolder.getCurrentUserGuid();
 
         UserEntity userEntity = userRepository.findByUserGuid(userGuid);

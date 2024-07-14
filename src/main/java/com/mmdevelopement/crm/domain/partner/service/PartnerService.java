@@ -24,6 +24,8 @@ public class PartnerService {
     private final PartnerRepository partnerRepository;
 
     public List<PartnerDto> findPartners() {
+        log.info("Finding partners");
+
         return partnerRepository.findAll().stream()
                 .map(PartnerDto::fromEntity)
                 .map(partnerDto -> partnerDto.setImage(partnerDto.getImage() != null ? "present, but omitted" : null))
@@ -31,6 +33,8 @@ public class PartnerService {
     }
 
     public PartnerDto getPartnerById(Integer id) {
+        log.info("Getting partner by id {}", id);
+
         return partnerRepository.findById(id)
                 .map(PartnerDto::fromEntity)
                 .orElseThrow(() -> new ResourceNotFoundException("Partner with id " + id + " not found"));
@@ -38,6 +42,7 @@ public class PartnerService {
 
     @Transactional
     public PartnerDto savePartner(PartnerDto partnerDto) {
+        log.info("Saving partner {}", partnerDto);
 
         try {
             PartnerEntity partnerEntity = partnerDto.toEntity();
@@ -50,6 +55,7 @@ public class PartnerService {
     }
 
     public void deletePartner(Integer id) {
+        log.info("Deleting partner with id {}", id);
         partnerRepository.deleteById(id);
     }
 }

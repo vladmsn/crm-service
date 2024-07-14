@@ -38,6 +38,9 @@ public class PartnerEntity {
     @Column(name = "CUI")
     private String CUI;
 
+    @Column(name = "reg_com")
+    private String regCom;
+
     @Column(name = "currency_code")
     private String currencyCode;
 
@@ -59,7 +62,6 @@ public class PartnerEntity {
     @Column(name = "saved")
     private Boolean saved;
 
-    @Lob
     @Column(name = "profile_picture", columnDefinition = "bytea")
     private byte[] image;
 

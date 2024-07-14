@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true, fluent = true)
 @Entity
-@Table(name = "organization_invoice_preferences")
+@Table(name = "organization_invoice_preferences", schema = "public")
 public class OrganizationInvoicePreferencesEntity {
 
     @Id
@@ -27,4 +27,13 @@ public class OrganizationInvoicePreferencesEntity {
 
     @Column(name = "starting_number")
     private Integer startingNumber;
+
+    @Column(name = "notes")
+    private String notes;
+
+    @Column(name = "footer")
+    private String footer;
+
+    @Column(name = "sub_header")
+    private String subHeader;
 }

@@ -6,8 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PartnerRepository extends JpaRepository<PartnerEntity, Integer> {
-
-    PartnerEntity findByName(String name);
-
-    PartnerEntity findByCUI(String CUI);
 }

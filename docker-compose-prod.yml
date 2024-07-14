@@ -5,17 +5,23 @@ services:
     restart: always
     ports:
       - "8890:8080"
-
+      - "8443:8443"
     environment:
-      KEYCLOAK_DATABASE_HOST: <<DB_HOST>>
+      KEYCLOAK_PRODUCTION: true
+
+      KEYCLOAK_DATABASE_HOST: <<RDS_HOST>>
       KEYCLOAK_DATABASE_PORT: 5432
       KEYCLOAK_DATABASE_NAME: keycloak
       KEYCLOAK_DATABASE_SCHEMA: public
-      KEYCLOAK_DATABASE_USER: <<DB_USER>>
-      KEYCLOAK_DATABASE_PASSWORD: <<DB_PASSWORD>>
-
-      KEYCLOAK_ADMIN: <<ADMIN>>
-      KEYCLOAK_ADMIN_PASSWORD: <<ADMIN_PASSWORD>>
-
-      KEYCLOAK_FRONTEND_URL: https://keycloak-admin.efcon.ro:8890
-      KEYCLOAK_JDBC_PARAMS: "sslmode=verify-ca&sslrootcert=/opt/bitnami/keycloak/certs/rds-ca-cert.pem"
+      KEYCLOAK_DATABASE_USER: <<RDS_DB_USERNAME>>
+      KEYCLOAK_DATABASE_PASSWORD: <<RDS_DB_PASSWORD>>
+      KEYCLOAK_ENABLE_HTTPS: true
+      KEYCLOAK_LOG_LEVEL: DEBUG
+      KEYCLOAK_HTTPS_USE_PEM: true
+      KEYCLOAK_HTTPS_CERTIFICATE_FILE: /opt/bitnami/keycloak/certs/tls.crt
+      KEYCLOAK_HTTPS_CERTIFICATE_KEY_FILE: /opt/bitnami/keycloak/certs/tls.key
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: <<PASSWORD>>
+    volumes:
+      - ./certs/tls.crt:/opt/bitnami/keycloak/certs/tls.crt:ro
+      - ./certs/tls.key:/opt/bitnami/keycloak/certs/tls.key:ro

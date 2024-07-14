@@ -14,7 +14,9 @@ import java.util.UUID;
 @Data
 @Accessors(chain = true, fluent = true)
 @Entity
-@Table(name = "organization")
+@Table(name = "organization", schema = "public", indexes =
+    @Index(name = "idx_organization_tenant_id", columnList = "tenant_id", unique = true)
+)
 public class OrganizationEntity {
 
     @Id
@@ -30,8 +32,14 @@ public class OrganizationEntity {
     @Column(name = "db_schema_name", nullable = false, length = 200)
     private String dbSchemaName;
 
-    @Column(name = "color_code", nullable = false, length = 200)
-    private String colorCode;
+    @Column(name = "color_code_nav_bar", nullable = false, length = 200)
+    private String colorCodeNavBar;
+
+    @Column(name = "color_code_side_bar", nullable = false, length = 200)
+    private String colorLeftSideBar;
+
+    @Column(name = "font", nullable = false, length = 200)
+    private String font;
 
     @Column(name = "license", nullable = false, unique = true, updatable = false)
     private String license = UUID.randomUUID().toString();

@@ -4,9 +4,14 @@ import lombok.Builder;
 
 
 @Builder
-public record OrganizationDto (String name,
+public record OrganizationDto (Integer id,
+                               String name,
                                String tenantId,
                                String license,
-                               String colorCode,
+                               String colorCodeNavBar,
+                               String colorLeftSideBar,
+                               String font,
                                String dbSchemaName,
-                               String status) {}
+                               String status,
+                               Integer version
+                               ) {}

@@ -20,25 +20,32 @@ public class InvoicePaymentDto {
     private String partnerName;
     private String partnerCUI;
 
+    private Integer categoryId;
+    private String categoryName;
+
     private Float amount;
     private InvoiceDirection direction;
     private Integer bankAccountId;
     private String paymentMethod;
+    private InvoiceDirection paymentDirection;
     private String description;
     private Date paymentDate;
 
     public static InvoicePaymentDto fromEntity(InvoicePaymentEntity invoicePaymentEntity, String partnerName,
-                                               String partnerCUI, InvoiceDirection direction) {
+                                               String partnerCUI, String categoryName, InvoiceDirection direction) {
         return new InvoicePaymentDto()
                 .setId(invoicePaymentEntity.id())
                 .setInvoiceId(invoicePaymentEntity.invoiceId())
                 .setPartnerId(invoicePaymentEntity.partnerId())
                 .setPartnerName(partnerName)
                 .setPartnerCUI(partnerCUI)
+                .setCategoryId(invoicePaymentEntity.categoryId())
+                .setCategoryName(categoryName)
                 .setAmount(invoicePaymentEntity.amount())
                 .setDirection(direction)
                 .setBankAccountId(invoicePaymentEntity.bankAccountId())
                 .setPaymentMethod(invoicePaymentEntity.paymentMethod())
+                .setPaymentDirection(InvoiceDirection.fromString(invoicePaymentEntity.paymentDirection()))
                 .setDescription(invoicePaymentEntity.description())
                 .setPaymentDate(invoicePaymentEntity.paymentDate());
     }
@@ -48,9 +55,11 @@ public class InvoicePaymentDto {
                 .id(getId())
                 .invoiceId(getInvoiceId())
                 .partnerId(getPartnerId())
+                .categoryId(getCategoryId())
                 .amount(getAmount())
                 .bankAccountId(getBankAccountId())
                 .paymentMethod(getPaymentMethod())
+                .paymentDirection(getPaymentDirection().toString())
                 .description(getDescription())
                 .paymentDate(getPaymentDate());
     }

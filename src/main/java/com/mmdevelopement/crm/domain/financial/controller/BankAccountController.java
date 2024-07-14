@@ -5,6 +5,7 @@ import com.mmdevelopement.crm.domain.financial.entity.dto.TransferDto;
 import com.mmdevelopement.crm.domain.financial.service.BankAccountService;
 import com.mmdevelopement.crm.infrastructure.exceptions.BadRequestException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,21 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/financial/bank-account")
+@RequestMapping("/api/v1/financial/account")
 @RequiredArgsConstructor
 public class BankAccountController {
-    // apis to be implemented
-    // 1. create account
-    // 2. update account
-    // 3. delete account
-    // 4. get account by id -> detailed view maybe (with transfers tied to account)
-    // 5. get all accounts -> id, name, balance, number
-
-    // 6. transfer money between accounts
-    // 7. update transfer
-    // 8. delete transfer
-    // 9. get transfer by id
-    // 10. get all transfers
 
     private final BankAccountService bankAccountService;
 
@@ -59,18 +48,23 @@ public class BankAccountController {
         return bankAccountService.saveAccount(bankAccountDto);
     }
 
-    @GetMapping("/transfers/")
+    @GetMapping("/transfer/")
     public List<TransferDto> getAllTransfers() {
         return bankAccountService.getAllTransfers();
     }
 
-    @GetMapping("/transfers/{id}")
+    @GetMapping("/transfer/{id}")
     public TransferDto getTransferById(@PathVariable Integer id) {
         return bankAccountService.getTransferById(id);
     }
 
-    @PostMapping("/transfers/create")
+    @PostMapping("/transfer/create")
     public TransferDto saveTransfer(@RequestBody TransferDto transferDto) {
         return bankAccountService.makeTransfer(transferDto);
+    }
+
+    @DeleteMapping("/transfer/{id}")
+    public void deleteTransfer(@PathVariable Integer id) {
+        bankAccountService.deleteTransfer(id);
     }
 }
