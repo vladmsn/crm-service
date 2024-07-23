@@ -93,18 +93,24 @@ public class InvoiceService {
 
         var invoiceInfo = organizationService.getCurrentOrganizationInvoiceInfo();
 
-        BooleanExpression predicate = QInvoiceEntity.invoiceEntity.direction.eq(InvoiceDirection.OUT.name());
-        OrderSpecifier<Integer> orderSpecifier = QInvoiceEntity.invoiceEntity.id.desc();
+        Optional<InvoiceEntity> latestInvoice = invoiceRepository.findFirstByDirectionOrderByIdDesc(InvoiceDirection.OUT.name());
 
-        return StreamSupport.stream(invoiceRepository.findAll(predicate, orderSpecifier).spliterator(), false)
-                .findFirst()
-                .map(invoice -> invoice.invoiceNumber())
-                .map(invoiceNumber -> {
-                    String prefix = invoiceInfo.prefix();
-                    return Integer.parseInt(invoiceNumber.replace(prefix, ""));
-                })
-                .map(number -> number + 1)
-                .orElse(invoiceInfo.startingNumber());
+        if (latestInvoice.isPresent()) {
+            String invoiceNumber = latestInvoice.get().invoiceNumber();
+            String prefix = invoiceInfo.prefix();
+            // Assuming the invoice number format includes a prefix followed by a numeric value
+            if (invoiceNumber.startsWith(prefix)) {
+                String numericPart = invoiceNumber.substring(prefix.length());
+                try {
+                    int number = Integer.parseInt(numericPart);
+                    return number + 1; // Increment the last invoice number by 1
+                } catch (NumberFormatException e) {
+                    log.error("Failed to parse the numeric part of the invoice number: {}", numericPart, e);
+                }
+            }
+        }
+
+        return invoiceInfo.startingNumber();
     }
 
     @Transactional
@@ -114,12 +120,12 @@ public class InvoiceService {
         InvoiceEntity invoice = invoiceDto.toEntity();
         invoice.remainingAmount(invoice.total());
 
-        if (invoice.elements().isEmpty()) {
+        if (invoiceDto.getElements().isEmpty()) {
             throw new BadRequestException("Invoice must have at least one element");
         }
 
         InvoiceEntity savedInvoice = invoiceRepository.save(invoice);
-        addInvoiceElements(savedInvoice.id(), invoiceDto.getElements());
+        addInvoiceElements(savedInvoice, invoiceDto.getElements());
 
         log.info("Created invoice: {}", savedInvoice);
 
@@ -168,15 +174,8 @@ public class InvoiceService {
     }
 
     @Transactional
-    public void addInvoiceElements(Integer id, List<InvoiceElementDto> invoiceElementsList) {
-
-        if (id == null) {
-            throw new BadRequestException("Invoice id is required");
-        }
-
-        InvoiceEntity invoice = invoiceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
-
+    public void addInvoiceElements(InvoiceEntity invoice, List<InvoiceElementDto> invoiceElementsList) {
+        log.info("Adding elements to invoice: {}", invoice);
         List<InvoiceElementEntity> invoiceElements = invoiceElementsList
                 .stream()
                 .map(invElement -> {
@@ -184,6 +183,7 @@ public class InvoiceService {
                     elementService.getElementById(invElement.getElementId());
 
                     return new InvoiceElementEntity()
+                            .invoiceId(invoice.id())
                             .elementId(invElement.getElementId())
                             .quantity(invElement.getQuantity())
                             .tax(invElement.getElementTax())
@@ -206,7 +206,7 @@ public class InvoiceService {
                 .map(invoicePayment -> {
                     var partner = partnerService.getPartnerById(invoicePayment.partnerId());
                     var category = categoryService.getCategoryById(invoicePayment.categoryId());
-                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), category.getName(),
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCui(), category.getName(),
                             InvoiceDirection.fromString(invoicePayment.paymentDirection()));
                 })
                 .toList();
@@ -220,7 +220,7 @@ public class InvoiceService {
                 .map(invoicePayment -> {
                     var partner = partnerService.getPartnerById(invoicePayment.partnerId());
                     var category = categoryService.getCategoryById(invoicePayment.categoryId());
-                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), category.getName(),
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCui(), category.getName(),
                             InvoiceDirection.fromString(invoicePayment.paymentDirection()));
                 })
                 .toList();
@@ -244,7 +244,7 @@ public class InvoiceService {
                     var partner = partnerService.getPartnerById(invoicePayment.partnerId());
                     var category = categoryService.getCategoryById(invoicePayment.categoryId());
 
-                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCUI(), category.getName(),
+                    return InvoicePaymentDto.fromEntity(invoicePayment, partner.getName(), partner.getCui(), category.getName(),
                             InvoiceDirection.valueOf(invoice.direction()));
                 })
                 .toList();
@@ -255,7 +255,7 @@ public class InvoiceService {
 
         if (invoicePaymentDto.getInvoiceId() == null && invoicePaymentDto.getReference() == null
                                                         || invoicePaymentDto.getBankAccountId() == null) {
-            throw new BadRequestException("Invoice id oe reference, bank account id are required");
+            throw new BadRequestException("Invoice id or reference, bank account id are required");
         }
 
         partnerService.getPartnerById(invoicePaymentDto.getPartnerId());
@@ -277,7 +277,7 @@ public class InvoiceService {
         var partner = partnerService.getPartnerById(savedPayment.partnerId());
         var category = categoryService.getCategoryById(invoicePaymentDto.getCategoryId());
 
-        return InvoicePaymentDto.fromEntity(savedPayment, partner.getName(), partner.getCUI(), category.getName(),
+        return InvoicePaymentDto.fromEntity(savedPayment, partner.getName(), partner.getCui(), category.getName(),
                 invoicePaymentDto.getDirection());
     }
 

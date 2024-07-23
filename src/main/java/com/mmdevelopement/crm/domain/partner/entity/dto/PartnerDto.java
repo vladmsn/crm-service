@@ -15,7 +15,7 @@ public class PartnerDto {
     private String phoneNumber;
     private String website;
     private String reference;
-    private String CUI;
+    private String cui;
     private String regCom;
     private String address;
     private String city;
@@ -28,12 +28,12 @@ public class PartnerDto {
     public static PartnerDto fromEntity(PartnerEntity partnerEntity) {
         return new PartnerDto()
                 .setId(partnerEntity.id())
-                .setImage(partnerEntity.name())
+                .setName(partnerEntity.name())
                 .setEmail(partnerEntity.email())
                 .setPhoneNumber(partnerEntity.phoneNumber())
                 .setWebsite(partnerEntity.website())
                 .setReference(partnerEntity.reference())
-                .setCUI(partnerEntity.CUI())
+                .setCui(partnerEntity.CUI())
                 .setRegCom(partnerEntity.regCom())
                 .setAddress(partnerEntity.address())
                 .setCity(partnerEntity.city())
@@ -52,7 +52,7 @@ public class PartnerDto {
                 .phoneNumber(phoneNumber)
                 .website(website)
                 .reference(reference)
-                .CUI(CUI)
+                .CUI(cui)
                 .regCom(regCom)
                 .address(address)
                 .city(city)

@@ -3,6 +3,7 @@ package com.mmdevelopement.crm.domain.partner.service;
 import com.mmdevelopement.crm.domain.partner.entity.PartnerEntity;
 import com.mmdevelopement.crm.domain.partner.entity.dto.PartnerDto;
 import com.mmdevelopement.crm.domain.partner.repository.PartnerRepository;
+import com.mmdevelopement.crm.infrastructure.exceptions.BadRequestException;
 import com.mmdevelopement.crm.infrastructure.exceptions.HttpStatusException;
 import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundException;
 import com.mmdevelopement.crm.utils.ImageUtils;
@@ -42,6 +43,14 @@ public class PartnerService {
 
     @Transactional
     public PartnerDto savePartner(PartnerDto partnerDto) {
+        if (partnerDto.getId() == null) {
+            throw new BadRequestException("Partner id is required when updating");
+        }
+
+        if (partnerRepository.existsById(partnerDto.getId())) {
+            throw new BadRequestException("Partner with id " + partnerDto.getId() + " not found");
+        }
+
         log.info("Saving partner {}", partnerDto);
 
         try {

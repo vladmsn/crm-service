@@ -70,7 +70,19 @@ public class BankAccountService {
 
         return transferEntities.stream()
                 .map(TransferDto::fromEntity)
+                .peek(this::decorateWithAccountDetails)
                 .collect(Collectors.toList());
+    }
+
+    private void decorateWithAccountDetails(TransferDto transferDto) {
+        BankAccountEntity fromAccount = bankAccountRepository.findById(transferDto.getFromBankAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Bank account with id " + transferDto.getFromBankAccountId() + " not found"));
+
+        BankAccountEntity toAccount = bankAccountRepository.findById(transferDto.getToBankAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Bank account with id " + transferDto.getToBankAccountId() + " not found"));
+
+        transferDto.setFromBankAccountName(fromAccount.name());
+        transferDto.setToBankAccountName(toAccount.name());
     }
 
     public TransferDto getTransferById(Integer id) {
@@ -147,6 +159,27 @@ public class BankAccountService {
                 .setToBankAccountName(toAccount.name());
     }
 
+    public TransferDto updateTransferDetails(TransferDto transferDto) {
+        if (transferDto.getId() == null) {
+            throw new BadRequestException("Transfer id is required for update");
+        }
+
+        log.info("Updating transfer with id {}", transferDto.getId());
+        TransferEntity transferEntity = transferRepository.findById(transferDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Transfer with id " + transferDto.getId() + " not found"));
+
+        validateNonEditableFields(transferEntity, transferDto);
+
+        transferEntity.description(transferDto.getDescription());
+        transferEntity.paymentMethod(transferDto.getPaymentMethod());
+        transferEntity.reference(transferDto.getReference());
+
+        transferRepository.save(transferEntity);
+        log.info("Transfer with id {} updated", transferDto.getId());
+
+        return TransferDto.fromEntity(transferEntity);
+    }
+
     @Transactional
     public void cancelTransfer(Integer transferId) {
         log.info("Cancelling transfer with id {}", transferId);
@@ -173,7 +206,7 @@ public class BankAccountService {
     }
 
     private void validateTransfer(TransferDto transferDto) {
-        if (transferDto.getFromBankAccountId() == null || transferDto.getToBankAccountName() == null) {
+        if (transferDto.getFromBankAccountId() == null || transferDto.getToBankAccountId() == null) {
             throw new BadRequestException("From and to bank account ids cannot be null");
         }
 
@@ -187,8 +220,13 @@ public class BankAccountService {
     }
 
     private void validateSufficientFunds(BankAccountEntity fromAccount, Double amount) {
-        if (fromAccount.id() != 1  || fromAccount.sold() < amount) {
-            throw new BadRequestException("Not enough money in account with id " + fromAccount.id());
+        if (fromAccount.id() == 1) {
+            log.debug("Account with id {} is a personal account, no need to check funds", fromAccount.id());
+            return;
+        }
+
+        if (fromAccount.sold() < amount) {
+            throw new BadRequestException("Not enough funds in account with id " + fromAccount.id());
         }
     }
 
@@ -205,5 +243,20 @@ public class BankAccountService {
         }
 
         bankAccountRepository.save(bankAccountEntity);
+    }
+
+    private void validateNonEditableFields(TransferEntity transferEntity, TransferDto transferDto) {
+        if (!transferEntity.fromBankAccountId().equals(transferDto.getFromBankAccountId()) ||
+                !transferEntity.toBankAccountId().equals(transferDto.getToBankAccountId())) {
+            throw new BadRequestException("From and to bank account ids cannot be changed during update");
+        }
+
+        if (!transferEntity.amount().equals(transferDto.getAmount())) {
+            throw new BadRequestException("Amount cannot be changed during update");
+        }
+
+        if (transferEntity.transferDate().compareTo(transferDto.getDate()) != 0) {
+            throw new BadRequestException("Transfer date cannot be changed during update");
+        }
     }
 }

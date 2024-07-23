@@ -41,7 +41,6 @@ public class PartnerController {
         return partnerService.savePartner(partnerDto);
     }
 
-
     @PutMapping("/")
     @ResponseStatus(HttpStatus.OK)
     public PartnerDto updatePartner(@RequestBody PartnerDto partnerDto) {

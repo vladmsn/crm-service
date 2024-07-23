@@ -106,11 +106,11 @@ CREATE TABLE invoice_element (
     id SERIAL PRIMARY KEY,
     invoice_id INT NOT NULL,
     element_id INT NOT NULL,
-    tax_id INT NOT NULL,
+    tax FLOAT NOT NULL,
     quantity INT NOT NULL,
+    price FLOAT NOT NULL,
     FOREIGN KEY (invoice_id) REFERENCES invoice(id),
-    FOREIGN KEY (element_id) REFERENCES element(id),
-    FOREIGN KEY (tax_id) REFERENCES tax(id)
+    FOREIGN KEY (element_id) REFERENCES element(id)
 );
 
 CREATE TABLE invoice_payment (

@@ -7,7 +7,7 @@ public record OrganizationInfoDto(
         String phoneNumber,
         String email,
         String image,
-        String CUI,
+        String cui,
         String regCom,
         String address,
         String city,

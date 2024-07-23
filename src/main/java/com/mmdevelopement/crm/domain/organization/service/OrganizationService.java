@@ -55,7 +55,7 @@ public class OrganizationService {
                         .phoneNumber(organizationInfoEntity.phoneNumber())
                         .email(organizationInfoEntity.email())
                         .image(organizationInfoEntity.image() != null ? "present, but omitted" : null)
-                        .CUI(organizationInfoEntity.CUI())
+                        .cui(organizationInfoEntity.CUI())
                         .address(organizationInfoEntity.address())
                         .city(organizationInfoEntity.city())
                         .county(organizationInfoEntity.county())
@@ -121,7 +121,7 @@ public class OrganizationService {
                 .phoneNumber(organizationInfoEntity.phoneNumber())
                 .email(organizationInfoEntity.email())
                 .image(organizationInfoEntity.image() != null ? ImageUtils.encodeImage(organizationInfoEntity.image()): null)
-                .CUI(organizationInfoEntity.CUI())
+                .cui(organizationInfoEntity.CUI())
                 .regCom(organizationInfoEntity.regCom())
                 .address(organizationInfoEntity.address())
                 .city(organizationInfoEntity.city())
@@ -175,7 +175,7 @@ public class OrganizationService {
                 .phoneNumber(organizationWrapper.getPhone())
                 .email(organizationWrapper.getEmail())
                 .image(ImageUtils.decodeImage(organizationWrapper.getImage()))
-                .CUI(organizationWrapper.getCUI())
+                .CUI(organizationWrapper.getCui())
                 .address(organizationWrapper.getAddress())
                 .city(organizationWrapper.getCity())
                 .county(organizationWrapper.getCounty())
@@ -203,7 +203,7 @@ public class OrganizationService {
         organizationInfoEntity.phoneNumber(organizationWrapper.getPhone());
         organizationInfoEntity.email(organizationWrapper.getEmail());
         organizationInfoEntity.image(ImageUtils.decodeImage(organizationWrapper.getImage()));
-        organizationInfoEntity.CUI(organizationWrapper.getCUI());
+        organizationInfoEntity.CUI(organizationWrapper.getCui());
         organizationInfoEntity.address(organizationWrapper.getAddress());
         organizationInfoEntity.city(organizationWrapper.getCity());
         organizationInfoEntity.county(organizationWrapper.getCounty());

@@ -11,7 +11,7 @@ public class OrganizationWrapper {
     private String email;
     private String image;
 
-    private String CUI;
+    private String cui;
 
     private String address;
     private String city;

@@ -48,6 +48,11 @@ public class BankAccountController {
         return bankAccountService.saveAccount(bankAccountDto);
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteAccount(@PathVariable Integer id) {
+        bankAccountService.deleteAccount(id);
+    }
+
     @GetMapping("/transfer/")
     public List<TransferDto> getAllTransfers() {
         return bankAccountService.getAllTransfers();
@@ -58,13 +63,18 @@ public class BankAccountController {
         return bankAccountService.getTransferById(id);
     }
 
-    @PostMapping("/transfer/create")
+    @PostMapping("/transfer/")
     public TransferDto saveTransfer(@RequestBody TransferDto transferDto) {
         return bankAccountService.makeTransfer(transferDto);
     }
 
+    @PutMapping("/transfer/")
+    public TransferDto updateTransfer(@RequestBody TransferDto transferDto) {
+        return bankAccountService.updateTransferDetails(transferDto);
+    }
+
     @DeleteMapping("/transfer/{id}")
     public void deleteTransfer(@PathVariable Integer id) {
-        bankAccountService.deleteTransfer(id);
+        bankAccountService.cancelTransfer(id);
     }
 }

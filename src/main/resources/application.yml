@@ -3,9 +3,9 @@ spring:
     name: crm-service
   datasource:
     crm:
-      url: jdbc:postgresql://localhost:5432/global_db
-      username: ${username}
-      password: ${password}
+      url: jdbc:postgresql://crm-database.ch6yisuca6nm.us-east-1.rds.amazonaws.com:5432/global_db
+      username: crm_admin
+      password: dde1OIFhx2F^B4uy
       driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 25
@@ -31,27 +31,26 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8890/realms/crm
-          jwk-set-uri: http://localhost:8890/realms/crm/protocol/openid-connect/certs
+          issuer-uri: https://backend-crm.efcon.ro/auth/realms/crm
+          jwk-set-uri: https://backend-crm.efcon.ro/auth/realms/crm/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
-            client-id: ${client-id}
-            client-secret: ${secret}
+            client-id: crm_client
+            client-secret: Br6EK5BFIcPFKODVq8CdlPRNsflhG9wG
             authorization-grant-type: authorization_code
             scope:
               - openid
         provider:
           keycloak:
-            issuer-uri: http://localhost:8890/realms/crm
+            issuer-uri: https://backend-crm.efcon.ro/auth/realms/crm
             user-name-attribute: preferred_username
 keycloak:
   client:
-    server-url: http://localhost:8890
+    server-url: https://backend-crm.efcon.ro/auth
     realm: crm
-    client-id: ${admin-client-id}
-    secret: ${admin-secret}
-
+    client-id:  admin-cli
+    secret: wN2yBMxlRNBITmHuZxdrQiLrye2T3j0K
 
 springdoc:
   api-docs:
