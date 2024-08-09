@@ -38,13 +38,13 @@ public class PartnerController {
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
     public PartnerDto createPartner(@RequestBody PartnerDto partnerDto) {
-        return partnerService.savePartner(partnerDto);
+        return partnerService.createPartner(partnerDto);
     }
 
     @PutMapping("/")
     @ResponseStatus(HttpStatus.OK)
     public PartnerDto updatePartner(@RequestBody PartnerDto partnerDto) {
-        return partnerService.savePartner(partnerDto);
+        return partnerService.updatePartner(partnerDto);
     }
 
     @DeleteMapping("/{id}")

@@ -36,7 +36,7 @@ public class RequestFilter extends OncePerRequestFilter {
                 String tenantId = jwt.getClaimAsString("tenant_id");
                 String userGuid = jwt.getSubject();
 
-                log.info("Setting request context for tenantId: {} and userGuid: {}", tenantId, userGuid);
+                log.debug("Setting request context for tenantId: {} and userGuid: {}", tenantId, userGuid);
 
                 RequestContext requestContext = RequestContext.builder()
                         .tenantId(tenantId)

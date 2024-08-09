@@ -30,6 +30,7 @@ public class ElementService {
 
         return elementRepository.findAll()
                 .stream()
+                .filter(elementEntity -> !elementEntity.deleted())
                 .map(ElementDto::toDto)
                 .peek(elementDto -> decorateWithDetails(elementDto))
                 .toList();
@@ -47,10 +48,40 @@ public class ElementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Element not found"));
     }
 
-    public ElementDto saveElement(ElementDto elementDto) {
-        ElementEntity elementEntity =  elementRepository.save(elementDto.toEntity());
+    public ElementDto createElement(ElementDto elementDto) {
+        log.debug("Creating element: {}", elementDto);
+        ElementEntity elementEntity =  elementDto.toEntity();
+        elementEntity.deleted(false);
 
+        elementEntity = elementRepository.save(elementEntity);
         log.info("Element saved: {}", elementEntity);
+
+        ElementDto element = ElementDto.toDto(elementEntity);
+        decorateWithDetails(element);
+
+        return element;
+    }
+
+    public ElementDto updateElement(ElementDto elementDto) {
+        log.debug("Updating element: {}", elementDto);
+        if (elementDto.getId() == null) {
+            throw new IllegalArgumentException("Element id is required when updating");
+        }
+
+        ElementEntity elementEntity = elementRepository.findById(elementDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Element with id " + elementDto.getId() + " not found"));
+
+        elementEntity = elementEntity.name(elementDto.getName())
+                .categoryId(elementDto.getCategoryId())
+                .taxId(elementDto.getTaxId())
+                .sellingPrice(elementDto.getSellingPrice())
+                .acquisitionPrice(elementDto.getAcquisitionPrice())
+                .description(elementDto.getDescription())
+                .type(elementDto.getType());
+
+        elementEntity = elementRepository.save(elementEntity);
+
+        log.info("Element updated: {}", elementEntity);
 
         ElementDto element = ElementDto.toDto(elementEntity);
         decorateWithDetails(element);
@@ -66,6 +97,8 @@ public class ElementService {
 
         elementEntity.deleted(true);
         elementRepository.save(elementEntity);
+
+        log.info("Element with id {} marked as deleted", id);
     }
 
     private void decorateWithDetails(ElementDto elementDto) {

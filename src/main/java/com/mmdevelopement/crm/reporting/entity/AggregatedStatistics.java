@@ -7,9 +7,11 @@ import com.mmdevelopement.crm.reporting.entity.items.IncomeByCategoryItem;
 import com.mmdevelopement.crm.reporting.entity.items.Payables;
 import com.mmdevelopement.crm.reporting.entity.items.Receivables;
 import lombok.Builder;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 @Builder
 public class AggregatedStatistics {
     private List<AccountSoldItem> accountsSold;

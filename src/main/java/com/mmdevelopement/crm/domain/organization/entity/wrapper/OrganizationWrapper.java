@@ -7,11 +7,12 @@ public class OrganizationWrapper {
     private String name;
     private String tenantId;
 
-    private String phone;
+    private String phoneNumber;
     private String email;
     private String image;
 
     private String cui;
+    private String regCom;
 
     private String address;
     private String city;
@@ -20,6 +21,6 @@ public class OrganizationWrapper {
     private String postalCode;
 
     private String colorCodeNavBar;
-    private String colorLeftBar;
+    private String colorCodeLeftSideBar;
     private String font;
 }

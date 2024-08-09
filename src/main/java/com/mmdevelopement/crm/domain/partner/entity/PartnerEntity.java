@@ -59,8 +59,8 @@ public class PartnerEntity {
     @Column(name = "postal_code")
     private String postalCode;
 
-    @Column(name = "saved")
-    private Boolean saved;
+    @Column(name = "deleted")
+    private Boolean deleted;
 
     @Column(name = "profile_picture", columnDefinition = "bytea")
     private byte[] image;

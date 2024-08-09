@@ -23,7 +23,7 @@ public class PartnerDto {
     private String country;
     private String postalCode;
     private String image;
-    private Boolean saved;
+    private Boolean deleted;
 
     public static PartnerDto fromEntity(PartnerEntity partnerEntity) {
         return new PartnerDto()
@@ -41,7 +41,7 @@ public class PartnerDto {
                 .setCountry(partnerEntity.country())
                 .setPostalCode(partnerEntity.postalCode())
                 .setImage(partnerEntity.image() != null ? ImageUtils.encodeImage(partnerEntity.image()) : null)
-                .setSaved(partnerEntity.saved());
+                .setDeleted(partnerEntity.deleted());
     }
 
     public PartnerEntity toEntity() {
@@ -60,6 +60,24 @@ public class PartnerDto {
                 .country(country)
                 .postalCode(postalCode)
                 .image(image != null ? ImageUtils.decodeImage(image) : null)
-                .saved(saved);
+                .deleted(deleted);
+    }
+
+    public String toString() {
+        return "PartnerDto{" +
+                this.id + ", " +
+                this.name + ", " +
+                this.email + ", " +
+                this.phoneNumber + ", " +
+                this.website + ", " +
+                this.reference + ", " +
+                this.cui + ", " +
+                this.regCom + ", " +
+                this.address + ", " +
+                this.city + ", " +
+                this.county + ", " +
+                this.country + ", " +
+                this.postalCode + ", "
+                + (this.image != null ? "image present" : "no image") + "}";
     }
 }

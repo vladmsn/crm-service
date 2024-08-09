@@ -15,7 +15,7 @@ import java.util.Date;
 @Data
 @Accessors(chain = true, fluent = true)
 @Entity
-@Table(name = "invoice")
+@Table(name = "invoice_payment")
 public class InvoicePaymentEntity {
 
     @Id
@@ -27,9 +27,6 @@ public class InvoicePaymentEntity {
 
     @Column(name = "reference")
     private String reference;
-
-    @Column(name = "partner_id")
-    private Integer partnerId;
 
     @Column(name = "category_id")
     private Integer categoryId;
@@ -43,7 +40,7 @@ public class InvoicePaymentEntity {
     @Column(name = "payment_method")
     private String paymentMethod;
 
-    @Column(name = "payment_direction")
+    @Column(name = "direction")
     private String paymentDirection;
 
     @Column(name = "description")
@@ -51,4 +48,7 @@ public class InvoicePaymentEntity {
 
     @Column(name = "payment_date")
     private Date paymentDate;
+
+    @Column(name = "type")
+    private String type;
 }

@@ -9,5 +9,5 @@ import lombok.Data;
 public class PartnerStatistics {
     private String partnerName;
     private float totalReceived;
-    private float totalPayed;
+    private float totalPaid;
 }

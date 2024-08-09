@@ -30,6 +30,6 @@ public class CategoryEntity {
         @Column(name = "color_code")
         private String colorCode;
 
-        @Column(name = "parent_category_id")
-        private Integer parentCategoryId;
+        @Column(name = "deleted")
+        private Boolean deleted;
 }

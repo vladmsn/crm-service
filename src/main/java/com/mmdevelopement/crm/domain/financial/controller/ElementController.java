@@ -34,16 +34,12 @@ public class ElementController {
 
     @PostMapping("/")
     public ElementDto saveElement(@RequestBody ElementDto elementDto) {
-        return elementService.saveElement(elementDto);
+        return elementService.createElement(elementDto);
     }
 
     @PutMapping("/")
     public ElementDto updateElement(@RequestBody ElementDto elementDto) {
-        if (elementDto.getId() == null) {
-            throw new BadRequestException("Element id is required for update");
-        }
-
-        return elementService.saveElement(elementDto);
+        return elementService.updateElement(elementDto);
     }
 
     @DeleteMapping("/{id}")

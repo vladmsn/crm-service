@@ -16,11 +16,12 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    public List<CategoryDto> getAllCategories() {
+    public List<CategoryDto> getAllCategories(boolean includeDeleted) {
         log.debug("Getting all categories");
 
         return categoryRepository.findAll()
                 .stream()
+                .filter(categoryEntity -> includeDeleted || !categoryEntity.deleted())
                 .map(CategoryDto::toDto)
                 .toList();
     }
@@ -34,7 +35,12 @@ public class CategoryService {
     }
 
     public CategoryDto saveCategory(CategoryDto categoryDto) {
-        CategoryEntity categoryEntity =  categoryRepository.save(categoryDto.toEntity());
+        log.debug("Saving category: {}", categoryDto);
+
+        CategoryEntity categoryEntity = categoryDto.toEntity();
+        categoryEntity.deleted(false);
+
+        categoryEntity = categoryRepository.save(categoryEntity);
 
         log.info("Category saved: {}", categoryEntity);
 
@@ -47,6 +53,9 @@ public class CategoryService {
         CategoryEntity categoryEntity = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        categoryRepository.delete(categoryEntity);
+        categoryEntity.deleted(true);
+        categoryRepository.save(categoryEntity);
+
+        log.info("Category with id {} marked as deleted", id);
     }
 }

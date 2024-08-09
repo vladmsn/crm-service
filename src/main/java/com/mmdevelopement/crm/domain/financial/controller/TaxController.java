@@ -34,16 +34,12 @@ public class TaxController {
 
     @PostMapping("/")
     public TaxDto saveTax(@RequestBody TaxDto taxDto) {
-        return taxService.saveTax(taxDto);
+        return taxService.createTax(taxDto);
     }
 
     @PutMapping("/")
     public TaxDto updateTax(@RequestBody TaxDto taxDto) {
-        if (taxDto.getId() == null) {
-            throw new BadRequestException("Tax id is required for update");
-        }
-
-        return taxService.saveTax(taxDto);
+        return taxService.updateTax(taxDto);
     }
 
     @DeleteMapping("/{id}")

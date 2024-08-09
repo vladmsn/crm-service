@@ -45,7 +45,7 @@ CREATE TABLE partner (
      county VARCHAR(200),
      country VARCHAR(200) NOT NULL,
      postal_code VARCHAR(20) NOT NULL,
-     saved BOOLEAN DEFAULT FALSE,
+     deleted BOOLEAN DEFAULT FALSE,
      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -55,8 +55,7 @@ CREATE TABLE category (
     name VARCHAR(200) NOT NULL,
     type VARCHAR(200) NOT NULL,
     color_code VARCHAR(200) NOT NULL,
-    parent_category_id INT,
-    FOREIGN KEY (parent_category_id) REFERENCES category(id)
+    deleted BOOLEAN DEFAULT FALSE
 );
 
 create table tax (
@@ -89,7 +88,7 @@ CREATE TABLE invoice (
     partner_id INT NOT NULL,
     category_id INT,
     invoice_number VARCHAR(200) NOT NULL UNIQUE ,
-    order_number VARCHAR(200) NOT NULL,
+    order_number VARCHAR(200),
     direction VARCHAR(200) NOT NULL,
     invoice_date DATE NOT NULL,
     due_date DATE NOT NULL,
@@ -125,11 +124,9 @@ CREATE TABLE invoice_payment (
     reference VARCHAR(200),
     description VARCHAR(200),
     bank_account_id INT,
-    partner_id INT,
     FOREIGN KEY (invoice_id) REFERENCES invoice(id),
     FOREIGN KEY (category_id) REFERENCES category(id),
-    FOREIGN KEY (bank_account_id) REFERENCES bank_account(id),
-    FOREIGN KEY (partner_id) REFERENCES partner(id)
+    FOREIGN KEY (bank_account_id) REFERENCES bank_account(id)
 );
 
 CREATE INDEX invoice_id_index ON invoice_payment (reference);

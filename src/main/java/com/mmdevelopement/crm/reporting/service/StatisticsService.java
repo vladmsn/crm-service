@@ -3,16 +3,15 @@ package com.mmdevelopement.crm.reporting.service;
 
 import com.mmdevelopement.crm.config.security.context.RequestContextHolder;
 import com.mmdevelopement.crm.domain.financial.entity.dto.CategoryDto;
-import com.mmdevelopement.crm.domain.financial.entity.dto.InvoiceDto;
-import com.mmdevelopement.crm.domain.financial.entity.dto.InvoicePaymentDto;
-import com.mmdevelopement.crm.domain.financial.entity.enums.CategoryType;
 import com.mmdevelopement.crm.domain.financial.entity.enums.InvoiceDirection;
-import com.mmdevelopement.crm.domain.financial.entity.invoices.QInvoiceEntity;
-import com.mmdevelopement.crm.domain.financial.entity.invoices.QInvoicePaymentEntity;
+import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoiceEntity;
+import com.mmdevelopement.crm.domain.financial.entity.invoices.InvoicePaymentEntity;
 import com.mmdevelopement.crm.domain.financial.service.BankAccountService;
 import com.mmdevelopement.crm.domain.financial.service.CategoryService;
 import com.mmdevelopement.crm.domain.financial.service.InvoiceService;
+import com.mmdevelopement.crm.domain.partner.entity.dto.PartnerDto;
 import com.mmdevelopement.crm.domain.partner.service.PartnerService;
+import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundException;
 import com.mmdevelopement.crm.reporting.entity.AggregatedStatistics;
 import com.mmdevelopement.crm.reporting.entity.PartnerStatistics;
 import com.mmdevelopement.crm.reporting.entity.PartnerStatisticsRequest;
@@ -34,17 +33,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
+import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class StatisticsService {
 
-    public static final String VENIT = "venit";
-    public static final String CHELTUIALA = "cheltuiala";
+    public static final String VENIT = "Venit";
+    public static final String CHELTUIALA = "Cheltuiala";
     private final CategoryService categoryService;
     private final BankAccountService bankAccountService;
     private final InvoiceService invoiceService;
@@ -53,13 +50,57 @@ public class StatisticsService {
     public AggregatedStatistics getDashboardData(Date fromDate, Date toDate) {
         log.info("Getting dashboard data for tenant {} from {} to {}", RequestContextHolder.getCurrentTenantId(), fromDate, toDate);
 
+        List<InvoiceEntity> invoices = invoiceService.findInvoicesBetweenDates(fromDate, toDate);
+        List<InvoicePaymentEntity> payments = invoiceService.findPaymentsByPaymentDateBetween(fromDate, toDate);
+        List<CategoryDto> categories = categoryService.getAllCategories(true);
+
         return AggregatedStatistics.builder()
                 .accountsSold(getAccountsSold())
-                .receivables(getReceivables(fromDate, toDate))
-                .payables(getPayables(fromDate, toDate))
-                .cashFlow(getCashFlow(fromDate, toDate))
-                .incomeByCategory(getIncomeByCategory(fromDate, toDate))
-                .expensesByCategory(getExpensesByCategory(fromDate, toDate))
+                .receivables(getReceivables(fromDate, toDate, invoices))
+                .payables(getPayables(fromDate, toDate, invoices))
+                .cashFlow(getCashFlow(payments))
+                .incomeByCategory(getIncomeByCategory(payments, categories))
+                .expensesByCategory(getExpensesByCategory(payments, categories))
+                .build();
+    }
+
+    public PartnerStatistics getPartnerStatistics(PartnerStatisticsRequest request) {
+
+        log.info("Getting partner statistics for tenant {} from {} to {} for partner {}",
+                RequestContextHolder.getCurrentTenantId(), request.getFromDate(), request.getToDate(), request.getPartnerId());
+
+        List<PartnerDto> partners = partnerService.findPartners();
+        List<InvoiceEntity> invoices = invoiceService.findInvoicesBetweenDates(request.getFromDate(), request.getToDate());
+        List<InvoicePaymentEntity> payments = invoiceService.findPaymentsByPaymentDateBetween(request.getFromDate(), request.getToDate());
+
+        final CashFlowWrapper cashFlowWrapper = new CashFlowWrapper();
+
+        payments.stream()
+                .filter(payment -> payment.invoiceId() != null)
+                .filter(payment -> {
+                    for (InvoiceEntity invoice : invoices) {
+                        if (invoice.id().equals(payment.invoiceId())) {
+                            if (invoice.partnerId().equals(request.getPartnerId())) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                })
+                .forEach(payment -> {
+                    if (Objects.equals(payment.paymentDirection(), InvoiceDirection.IN.name())) {
+                        cashFlowWrapper.totalReceived += payment.amount();
+                    } else {
+                        cashFlowWrapper.totalPayed += payment.amount();
+                    }
+                });
+
+        String partnerName = partners.stream().filter(partner -> partner.getId().equals(request.getPartnerId())).findFirst().orElseThrow(() -> new ResourceNotFoundException("Partner not found")).getName();
+
+        return PartnerStatistics.builder()
+                .partnerName(partnerName)
+                .totalReceived(cashFlowWrapper.totalReceived)
+                .totalPaid(cashFlowWrapper.totalPayed)
                 .build();
     }
 
@@ -67,15 +108,14 @@ public class StatisticsService {
         return bankAccountService.getAllAccounts()
                 .stream()
                 .map(bankAccountDto ->  AccountSoldItem.builder()
-                            .accountName(bankAccountDto.getAccountNumber())
+                            .accountName(bankAccountDto.getName())
                             .totalSold(bankAccountDto.getSold())
                             .build())
                 .toList();
     }
 
-    public Receivables getReceivables(Date fromDate, Date toDate) {
-
-        Totals totals = calculateTotals(InvoiceDirection.IN, fromDate, toDate);
+    public Receivables getReceivables(Date fromDate, Date toDate, List<InvoiceEntity> invoices) {
+        Totals totals = calculateTotals(InvoiceDirection.OUT, fromDate, toDate, invoices);
         return Receivables.builder()
                 .totalToReceive(totals.totalOpen + totals.totalOverdue)
                 .totalOpen(totals.totalOpen)
@@ -83,8 +123,8 @@ public class StatisticsService {
                 .build();
     }
 
-    public Payables getPayables(Date fromDate, Date toDate) {
-        Totals totals = calculateTotals(InvoiceDirection.OUT, fromDate, toDate);
+    public Payables getPayables(Date fromDate, Date toDate, List<InvoiceEntity> invoices) {
+        Totals totals = calculateTotals(InvoiceDirection.IN, fromDate, toDate, invoices);
         return Payables.builder()
                 .totalToPay(totals.totalOpen + totals.totalOverdue)
                 .totalOpen(totals.totalOpen)
@@ -92,26 +132,20 @@ public class StatisticsService {
                 .build();
     }
 
-    private Map<Integer, Float> getAmountByCategory(String categoryType, Date fromDate, Date toDate) {
-        List<InvoicePaymentDto> payments = invoiceService.findPayments(QInvoicePaymentEntity.invoicePaymentEntity.paymentDate.between(fromDate, toDate));
-
+    private Map<Integer, Float> getAmountByCategory(String categoryType, List<InvoicePaymentEntity> payments, List<CategoryDto> categories) {
         Map<Integer, Float> amountByCategory = new HashMap<>();
 
-        Map<Integer, CategoryDto> categories = categoryService.getAllCategories()
-                .stream()
-                .collect(Collectors.toMap(CategoryDto::getId, Function.identity()));
-
-        for (InvoicePaymentDto payment : payments) {
-            Integer categoryId = payment.getCategoryId();
+        for (InvoicePaymentEntity payment : payments) {
+            Integer categoryId = payment.categoryId();
 
             if (categoryId == null) {
                 continue;
             }
 
-            var category = categories.get(categoryId);
+            var category = categories.stream().filter(cat -> cat.getId().equals(categoryId)).findFirst().orElse(null);
 
-            if (category.getType().equals(categoryType)) {
-                float amount = payment.getAmount();
+            if (category != null && category.getType().equals(categoryType)) {
+                float amount = payment.amount();
                 float existingAmount = amountByCategory.getOrDefault(categoryId, 0f);
                 amountByCategory.put(categoryId, existingAmount + amount);
             }
@@ -120,13 +154,12 @@ public class StatisticsService {
         return amountByCategory;
     }
 
-    public List<IncomeByCategoryItem> getIncomeByCategory(Date fromDate, Date toDate) {
-        Map<Integer, Float> incomeByCategory = getAmountByCategory(VENIT, fromDate, toDate);
+    public List<IncomeByCategoryItem> getIncomeByCategory(List<InvoicePaymentEntity> payments, List<CategoryDto> categories) {
+        Map<Integer, Float> incomeByCategory = getAmountByCategory(VENIT, payments, categories);
 
         return incomeByCategory.entrySet().stream()
                 .map(entry -> {
-                    var category = categoryService.getCategoryById(entry.getKey());
-
+                    var category = categories.stream().filter(cat -> cat.getId().equals(entry.getKey())).findFirst().orElseThrow(() -> new ResourceNotFoundException("Category not found"));
                     return IncomeByCategoryItem.builder()
                             .categoryName(category.getName())
                             .colorCode(category.getColorCode())
@@ -136,13 +169,12 @@ public class StatisticsService {
                 .toList();
     }
 
-    public List<ExpensesByCategoryItem> getExpensesByCategory(Date fromDate, Date toDate) {
-        Map<Integer, Float> expenseByCategory = getAmountByCategory(CHELTUIALA, fromDate, toDate);
+    public List<ExpensesByCategoryItem> getExpensesByCategory(List<InvoicePaymentEntity> payments, List<CategoryDto> categories) {
+        Map<Integer, Float> expenseByCategory = getAmountByCategory(CHELTUIALA, payments, categories);
 
         return expenseByCategory.entrySet().stream()
                 .map(entry -> {
-                    var category = categoryService.getCategoryById(entry.getKey());
-
+                    var category = categories.stream().filter(cat -> cat.getId().equals(entry.getKey())).findFirst().orElseThrow(() -> new ResourceNotFoundException("Category not found"));
                     return ExpensesByCategoryItem.builder()
                             .categoryName(category.getName())
                             .colorCode(category.getColorCode())
@@ -152,51 +184,24 @@ public class StatisticsService {
                 .toList();
     }
 
-
-    public PartnerStatistics getPartnerStatistics(PartnerStatisticsRequest request) {
-
-        log.info("Getting partner statistics for tenant {} from {} to {} for partner {}",
-                RequestContextHolder.getCurrentTenantId(), request.getFromDate(), request.getToDate(), request.getPartnerId());
-
-        final CashFlowWrapper cashFlowWrapper = new CashFlowWrapper();
-
-        invoiceService.findPayments(QInvoicePaymentEntity.invoicePaymentEntity
-                .paymentDate.between(request.getFromDate(), request.getToDate())
-                .and(QInvoicePaymentEntity.invoicePaymentEntity.partnerId.eq(request.getPartnerId())))
-                .forEach(payment -> {
-                    if (payment.getDirection() == InvoiceDirection.IN) {
-                        cashFlowWrapper.totalReceived += payment.getAmount();
-                    } else {
-                        cashFlowWrapper.totalPayed += payment.getAmount();
-                    }
-                });
-
-        String partnerName = partnerService.getPartnerById(request.getPartnerId()).getName();
-
-        return PartnerStatistics.builder()
-                .partnerName(partnerName)
-                .totalReceived(cashFlowWrapper.totalReceived)
-                .totalPayed(cashFlowWrapper.totalPayed)
-                .build();
+    private boolean isInvoiceOverdue(InvoiceEntity invoice) {
+        var today = new Date();
+        return invoice.dueDate().before(today);
     }
 
-
-    private boolean isInvoiceOverdue(InvoiceDto invoice) {
-        return invoice.getDueDate().after(new Date());
-    }
-
-    private Totals calculateTotals(InvoiceDirection direction, Date fromDate, Date toDate) {
-        List<InvoiceDto> unpaidInvoices = invoiceService.findInvoices(
-                QInvoiceEntity.invoiceEntity.direction.eq(direction.toString())
-                        .and(QInvoiceEntity.invoiceEntity.completed.eq(false))
-                        .and(QInvoiceEntity.invoiceEntity.dueDate.between(fromDate, toDate))
-        );
+    private Totals calculateTotals(InvoiceDirection direction, Date fromDate, Date toDate, List<InvoiceEntity> invoices) {
+        List<InvoiceEntity> unpaidInvoices = invoices.stream()
+                .filter(invoice -> invoice.direction().equals(direction.toString())
+                        && !invoice.completed()
+                        && invoice.invoiceDate().after(fromDate)
+                        && invoice.invoiceDate().before(toDate))
+                .toList();
 
         float totalOpen = 0f;
         float totalOverdue = 0f;
 
-        for (InvoiceDto invoice : unpaidInvoices) {
-            float remainingAmount = invoice.getRemainingAmount();
+        for (InvoiceEntity invoice : unpaidInvoices) {
+            float remainingAmount = invoice.remainingAmount();
             if (isInvoiceOverdue(invoice)) {
                 totalOverdue += remainingAmount;
             } else {
@@ -207,21 +212,19 @@ public class StatisticsService {
         return new Totals(totalOpen, totalOverdue);
     }
 
-    public List<CashFlowItem> getCashFlow(Date fromDate, Date toDate) {
-        List<InvoicePaymentDto> payments = invoiceService.findPayments(QInvoicePaymentEntity.invoicePaymentEntity.paymentDate.between(fromDate, toDate));
-
+    public List<CashFlowItem> getCashFlow(List<InvoicePaymentEntity> payments) {
         Map<String, CashFlowItem> cashFlowMap = new HashMap<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
-        for (InvoicePaymentDto payment : payments) {
-            LocalDate paymentDate = payment.getPaymentDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        for (InvoicePaymentEntity payment : payments) {
+            LocalDate paymentDate = payment.paymentDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             String monthKey = paymentDate.format(formatter);
             int year = paymentDate.getYear();
             int month = paymentDate.getMonthValue();
 
             CashFlowItem existingItem = cashFlowMap.get(monthKey);
-            float income = (payment.getDirection() == InvoiceDirection.IN) ? payment.getAmount() : 0;
-            float expense = (payment.getDirection() == InvoiceDirection.OUT) ? payment.getAmount() : 0;
+            float income = (Objects.equals(payment.paymentDirection(), InvoiceDirection.IN.name())) ? payment.amount() : 0;
+            float expense = (Objects.equals(payment.paymentDirection(), InvoiceDirection.OUT.name())) ? payment.amount() : 0;
 
             if (existingItem != null) {
                 income += existingItem.income();

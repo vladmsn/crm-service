@@ -1,6 +1,7 @@
 package com.mmdevelopement.crm.domain.user.controller;
 
 
+import com.mmdevelopement.crm.domain.user.entity.dto.PasswordChangeRequest;
 import com.mmdevelopement.crm.domain.user.entity.dto.UserDto;
 import com.mmdevelopement.crm.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +43,8 @@ public class UserController {
     }
 
     @PutMapping("/password")
-    public void updateUserPassword(@RequestParam("password") String password) {
-        userService.updateUserPassword(password);
+    public void updateUserPassword(@RequestBody PasswordChangeRequest passwordChangeRequest) {
+        userService.updateUserPassword(passwordChangeRequest.getNewPassword(), passwordChangeRequest.getOldPassword());
     }
 
     @GetMapping("/all")

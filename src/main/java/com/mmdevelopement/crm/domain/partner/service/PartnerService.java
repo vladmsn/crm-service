@@ -28,6 +28,7 @@ public class PartnerService {
         log.info("Finding partners");
 
         return partnerRepository.findAll().stream()
+                .filter(partnerEntity -> !partnerEntity.deleted())
                 .map(PartnerDto::fromEntity)
                 .map(partnerDto -> partnerDto.setImage(partnerDto.getImage() != null ? "present, but omitted" : null))
                 .toList();
@@ -42,7 +43,7 @@ public class PartnerService {
     }
 
     @Transactional
-    public PartnerDto savePartner(PartnerDto partnerDto) {
+    public PartnerDto updatePartner(PartnerDto partnerDto) {
         if (partnerDto.getId() == null) {
             throw new BadRequestException("Partner id is required when updating");
         }
@@ -51,7 +52,7 @@ public class PartnerService {
             throw new BadRequestException("Partner with id " + partnerDto.getId() + " not found");
         }
 
-        log.info("Saving partner {}", partnerDto);
+        log.info("Saving partner {}", partnerDto.toString());
 
         try {
             PartnerEntity partnerEntity = partnerDto.toEntity();
@@ -63,8 +64,29 @@ public class PartnerService {
         }
     }
 
+    @Transactional
+    public PartnerDto createPartner(PartnerDto partnerDto) {
+        log.info("Creating partner {}", partnerDto);
+
+        try {
+            PartnerEntity partnerEntity = partnerDto.toEntity();
+            partnerEntity.deleted(false);
+            partnerRepository.save(partnerEntity);
+            return PartnerDto.fromEntity(partnerEntity);
+        } catch (Exception e) {
+            log.error("Error creating partner", e);
+            throw new HttpStatusException("Error creating partner");
+        }
+    }
+
     public void deletePartner(Integer id) {
         log.info("Deleting partner with id {}", id);
-        partnerRepository.deleteById(id);
+
+        PartnerEntity partnerEntity = partnerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Partner with id " + id + " not found"));
+
+        partnerEntity.deleted(true);
+        partnerRepository.save(partnerEntity);
+        log.info("Partner with id {} marked as deleted", id);
     }
 }

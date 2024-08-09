@@ -107,9 +107,11 @@ public class UserService {
         return UserDto.fromUserEntity(userEntity, userProfileEntity);
     }
 
-    public void updateUserPassword(String password) {
+    public void updateUserPassword(String newPassword, String oldPassword) {
         String userGuid = RequestContextHolder.getCurrentUserGuid();
 
-        keycloakService.updateUserPassword(userGuid, password);
+//        keycloakService.validateUserPassword(userGuid, oldPassword);
+
+        keycloakService.updateUserPassword(userGuid, newPassword);
     }
 }

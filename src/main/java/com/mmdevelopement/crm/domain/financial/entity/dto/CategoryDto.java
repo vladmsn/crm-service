@@ -18,13 +18,15 @@ public class CategoryDto {
 
     private String colorCode;
 
+    private Boolean deleted;
 
     public static CategoryDto toDto(CategoryEntity categoryEntity) {
         return new CategoryDto()
                 .setId(categoryEntity.id())
                 .setName(categoryEntity.name())
                 .setType(categoryEntity.type())
-                .setColorCode(categoryEntity.colorCode());
+                .setColorCode(categoryEntity.colorCode())
+                .setDeleted(categoryEntity.deleted());
     }
 
     public CategoryEntity toEntity() {
@@ -32,7 +34,7 @@ public class CategoryDto {
                 .id(getId())
                 .name(getName())
                 .type(getType())
-                .colorCode(getColorCode());
+                .colorCode(getColorCode())
+                .deleted(getDeleted());
     }
-
 }

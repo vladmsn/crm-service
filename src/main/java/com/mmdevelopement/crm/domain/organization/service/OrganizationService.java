@@ -41,7 +41,7 @@ public class OrganizationService {
                         .name(organizationEntity.name())
                         .tenantId(organizationEntity.tenantId())
                         .colorCodeNavBar(organizationEntity.colorCodeNavBar())
-                        .colorLeftSideBar(organizationEntity.colorLeftSideBar())
+                        .colorCodeNavBar(organizationEntity.colorLeftSideBar())
                         .license(organizationEntity.license())
                         .dbSchemaName(organizationEntity.dbSchemaName())
                         .build())
@@ -78,8 +78,9 @@ public class OrganizationService {
                 .tenantId(organizationEntity.tenantId())
                 .license(organizationEntity.license())
                 .dbSchemaName(organizationEntity.dbSchemaName())
+                .font(organizationEntity.font())
                 .colorCodeNavBar(organizationEntity.colorCodeNavBar())
-                .colorLeftSideBar(organizationEntity.colorLeftSideBar())
+                .colorCodeLeftSideBar(organizationEntity.colorLeftSideBar())
                 .version(1)
                 .status(organizationEntity.status())
                 .build());
@@ -172,7 +173,7 @@ public class OrganizationService {
 
         OrganizationInfoEntity organizationInfoEntity = new OrganizationInfoEntity()
                 .organizationId(organizationEntity.id())
-                .phoneNumber(organizationWrapper.getPhone())
+                .phoneNumber(organizationWrapper.getPhoneNumber())
                 .email(organizationWrapper.getEmail())
                 .image(ImageUtils.decodeImage(organizationWrapper.getImage()))
                 .CUI(organizationWrapper.getCui())
@@ -194,15 +195,21 @@ public class OrganizationService {
 
     @Transactional
     public OrganizationDto updateOrganization(OrganizationWrapper organizationWrapper) {
+        String tenantId = organizationWrapper.getTenantId() == null ? RequestContextHolder.getCurrentTenantId(): organizationWrapper.getTenantId();
 
-        OrganizationEntity organizationEntity = organizationRepository.findByTenantId(organizationWrapper.getTenantId());
+        log.info("Updating organization for tenant: {}", tenantId);
+
+        OrganizationEntity organizationEntity = organizationRepository.findByTenantId(tenantId);
         organizationEntity.name(organizationWrapper.getName());
+        organizationEntity.colorLeftSideBar(organizationWrapper.getColorCodeLeftSideBar());
+        organizationEntity.colorCodeNavBar(organizationWrapper.getColorCodeNavBar());
+        organizationEntity.font(organizationWrapper.getFont());
         organizationRepository.save(organizationEntity);
 
         OrganizationInfoEntity organizationInfoEntity = organizationInfoRepository.findByOrganizationId(organizationEntity.id());
-        organizationInfoEntity.phoneNumber(organizationWrapper.getPhone());
+        organizationInfoEntity.phoneNumber(organizationWrapper.getPhoneNumber());
         organizationInfoEntity.email(organizationWrapper.getEmail());
-        organizationInfoEntity.image(ImageUtils.decodeImage(organizationWrapper.getImage()));
+        organizationInfoEntity.image(organizationWrapper.getImage() != null ? ImageUtils.decodeImage(organizationWrapper.getImage()) : null);
         organizationInfoEntity.CUI(organizationWrapper.getCui());
         organizationInfoEntity.address(organizationWrapper.getAddress());
         organizationInfoEntity.city(organizationWrapper.getCity());
@@ -216,8 +223,9 @@ public class OrganizationService {
                 .name(organizationEntity.name())
                 .tenantId(organizationEntity.tenantId())
                 .license(organizationEntity.license())
+                .font(organizationEntity.font())
                 .dbSchemaName(organizationEntity.dbSchemaName())
-                .colorLeftSideBar(organizationEntity.colorLeftSideBar())
+                .colorCodeLeftSideBar(organizationEntity.colorLeftSideBar())
                 .colorCodeNavBar(organizationEntity.colorCodeNavBar())
                 .status(organizationEntity.status())
                 .version(1)

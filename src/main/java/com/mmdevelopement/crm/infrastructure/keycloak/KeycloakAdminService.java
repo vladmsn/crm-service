@@ -4,6 +4,7 @@ import com.mmdevelopement.crm.config.database.properties.KeycloakClientPropertie
 import com.mmdevelopement.crm.config.security.context.RequestContextHolder;
 import com.mmdevelopement.crm.domain.user.entity.dto.UserDto;
 import com.mmdevelopement.crm.domain.user.entity.enums.UserRoles;
+import com.mmdevelopement.crm.infrastructure.exceptions.BadRequestException;
 import com.mmdevelopement.crm.infrastructure.exceptions.ResourceNotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.OAuth2Constants;
@@ -115,5 +116,15 @@ public class KeycloakAdminService {
     public UsersResource getUserResourceInstance() {
         return keycloak.realm(keycloakClientProperties.getRealm())
                 .users();
+    }
+
+    public void validateUserPassword(String userGuid, String oldPassword) {
+        UserRepresentation user = getUserResourceInstance().get(userGuid).toRepresentation();
+        CredentialRepresentation credential = Credentials
+                .createPasswordCredentials(oldPassword);
+
+        if (!user.getCredentials().contains(credential)) {
+            throw new BadRequestException("Invalid password provided");
+        }
     }
 }

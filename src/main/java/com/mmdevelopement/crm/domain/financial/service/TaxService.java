@@ -24,6 +24,7 @@ public class TaxService {
 
         return taxRepository.findAll()
                 .stream()
+                .filter(taxEntity -> !taxEntity.deleted())
                 .map(TaxDto::toDto)
                 .toList();
     }
@@ -36,11 +37,34 @@ public class TaxService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tax not found"));
     }
 
-    public TaxDto saveTax(TaxDto taxDto) {
-        TaxEntity taxEntity = taxRepository.save(TaxDto.toEntity(taxDto));
+    public TaxDto createTax(TaxDto taxDto) {
+        log.debug("Creating tax: {}", taxDto);
+        TaxEntity taxEntity = TaxDto.toEntity(taxDto);
+        taxEntity.deleted(false);
+
+        taxEntity = taxRepository.save(taxEntity);
 
         log.info("Tax saved: {}", taxEntity);
 
+        return TaxDto.toDto(taxEntity);
+    }
+
+    public TaxDto updateTax(TaxDto taxDto) {
+        log.debug("Updating tax: {}", taxDto);
+        if (taxDto.getId() == null) {
+            throw new IllegalArgumentException("Tax id is required when updating");
+        }
+
+        TaxEntity taxEntity = taxRepository.findById(taxDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tax with id " + taxDto.getId() + " not found"));
+
+        taxEntity = taxEntity.name(taxDto.getName())
+                .rate(taxDto.getValue())
+                .type(taxDto.getType());
+
+        taxEntity = taxRepository.save(taxEntity);
+
+        log.info("Tax updated: {}", taxEntity);
         return TaxDto.toDto(taxEntity);
     }
 
@@ -52,5 +76,7 @@ public class TaxService {
 
         taxEntity.deleted(true);
         taxRepository.save(taxEntity);
+
+        log.info("Tax with id {} marked as deleted", id);
     }
 }

@@ -31,12 +31,13 @@ public class InvoicePaymentDto {
     private String description;
     private Date paymentDate;
 
-    public static InvoicePaymentDto fromEntity(InvoicePaymentEntity invoicePaymentEntity, String partnerName,
+    public static InvoicePaymentDto fromEntity(InvoicePaymentEntity invoicePaymentEntity, String partnerName, Integer partnerId,
                                                String partnerCUI, String categoryName, InvoiceDirection direction) {
         return new InvoicePaymentDto()
                 .setId(invoicePaymentEntity.id())
                 .setInvoiceId(invoicePaymentEntity.invoiceId())
-                .setPartnerId(invoicePaymentEntity.partnerId())
+                .setReference(invoicePaymentEntity.reference())
+                .setPartnerId(partnerId)
                 .setPartnerName(partnerName)
                 .setPartnerCUI(partnerCUI)
                 .setCategoryId(invoicePaymentEntity.categoryId())
@@ -53,8 +54,9 @@ public class InvoicePaymentDto {
     public InvoicePaymentEntity toEntity() {
         return new InvoicePaymentEntity()
                 .id(getId())
+                .type(invoiceId == null ? "REF PAYMENT" : "INVOICE PAYMENT")
                 .invoiceId(getInvoiceId())
-                .partnerId(getPartnerId())
+                .reference(getReference())
                 .categoryId(getCategoryId())
                 .amount(getAmount())
                 .bankAccountId(getBankAccountId())
